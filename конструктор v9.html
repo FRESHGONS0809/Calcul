@@ -239,6 +239,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <script>
 'use strict';
 
+// ─── DOM ELEMENTS ──────────────────────────────────────────────────────────
+const svg          = document.getElementById('mainSvg');
+const viewport     = document.getElementById('viewport');
+const elemGroup    = document.getElementById('elementsGroup');
+const previewGrp   = document.getElementById('previewGroup');
+const selGrp       = document.getElementById('selectionGroup');
+const imgGrp       = document.getElementById('imageGroup');
+const canvasArea   = document.getElementById('canvasArea');
+const propsPanel   = document.getElementById('propsPanel');
+const zoomLbl      = document.getElementById('zoomLbl');
+const coordDisplay = document.getElementById('coordDisplay');
+const statusDisplay= document.getElementById('statusDisplay');
+const toastEl      = document.getElementById('toast');
+
 // ─── UTILITIES ─────────────────────────────────────────────────────────────
 function NS(tag){ return document.createElementNS('http://www.w3.org/2000/svg', tag); }
 function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
