@@ -557,7 +557,7 @@ function buildWideArrow(pts, color) {
   outline.setAttribute('d', shape.d);
   outline.setAttribute('fill', 'none');
   outline.setAttribute('stroke', color);
-  outline.setAttribute('stroke-width', '3');
+  outline.setAttribute('stroke-width', '2.5');
   outline.setAttribute('stroke-linejoin', 'round');
   outline.setAttribute('stroke-linecap', 'round');
   outline.setAttribute('vector-effect', 'non-scaling-stroke');
@@ -1120,21 +1120,15 @@ function makeArrowHead(pts,color){
   const angle=Math.atan2(last.y-prev.y,last.x-prev.x), hs=13/zoom, spread=.46;
   const tip=NS('polygon');
   tip.setAttribute('points',`${last.x},${last.y} ${last.x-hs*Math.cos(angle-spread)},${last.y-hs*Math.sin(angle-spread)} ${last.x-hs*Math.cos(angle+spread)},${last.y-hs*Math.sin(angle+spread)}`);
-  tip.setAttribute('fill',color); tip.setAttribute('stroke','#10101d'); tip.setAttribute('stroke-width',2/zoom);
-  tip.setAttribute('stroke-linejoin','round'); tip.setAttribute('vector-effect','non-scaling-stroke'); tip.style.pointerEvents='none';
+  tip.setAttribute('fill',color); tip.setAttribute('stroke-linejoin','round'); tip.setAttribute('vector-effect','non-scaling-stroke'); tip.style.pointerEvents='none';
   return tip;
 }
 
 function buildFlexArrow(pts,dashed,color){
   const g=NS('g'); g.dataset.label='';
   const d=smoothPath(pts);
-  const halo=NS('path'); halo.setAttribute('d',d);
-  halo.setAttribute('stroke','#0b0b14'); halo.setAttribute('stroke-width',7);
-  halo.setAttribute('stroke-opacity','.7'); halo.setAttribute('fill','none');
-  halo.setAttribute('stroke-linecap','round'); halo.setAttribute('stroke-linejoin','round');
-  halo.setAttribute('vector-effect','non-scaling-stroke'); halo.style.cursor='move'; g.appendChild(halo);
   const path=NS('path'); path.setAttribute('d',d);
-  setPathStyle(path,color,2.8,dashed?'10,7':null); path.style.cursor='move'; g.appendChild(path);
+  setPathStyle(path,color,3.5,dashed?'10,7':null); path.style.cursor='move'; g.appendChild(path);
   if(pts.length>=2) g.appendChild(makeArrowHead(pts,color));
   return g;
 }
@@ -1214,8 +1208,7 @@ function makeArrowHeadAt(tip,base,color){
   const angle=Math.atan2(tip.y-base.y,tip.x-base.x), hs=10/zoom, spread=.45;
   const poly=NS('polygon');
   poly.setAttribute('points',`${tip.x},${tip.y} ${tip.x-hs*Math.cos(angle-spread)},${tip.y-hs*Math.sin(angle-spread)} ${tip.x-hs*Math.cos(angle+spread)},${tip.y-hs*Math.sin(angle+spread)}`);
-  poly.setAttribute('fill',color); poly.setAttribute('stroke','#10101d'); poly.setAttribute('stroke-width',1.4/zoom);
-  poly.setAttribute('stroke-linejoin','round'); poly.style.pointerEvents='none'; return poly;
+  poly.setAttribute('fill',color); poly.setAttribute('stroke-linejoin','round'); poly.style.pointerEvents='none'; return poly;
 }
 function formatDistance(start,end){ return `${Math.round(dist(start,end))} м`; }
 function makeSvgBadge(text,x,y,unit,color,cls){
@@ -1313,19 +1306,15 @@ function smoothPathScreen(sp){
 function previewFlexArrow(pts,dashed,color){
   clearPreview(); if(pts.length<2) return;
   const sp=pts.map(toScreen), g=NS('g'); g.setAttribute('opacity','0.65');
-  const halo=NS('path'); halo.setAttribute('d',smoothPathScreen(sp));
-  halo.setAttribute('stroke','#0b0b14'); halo.setAttribute('stroke-width','7');
-  halo.setAttribute('stroke-opacity','.65'); halo.setAttribute('fill','none');
-  halo.setAttribute('stroke-linecap','round'); halo.setAttribute('stroke-linejoin','round'); g.appendChild(halo);
   const path=NS('path'); path.setAttribute('d',smoothPathScreen(sp));
-  path.setAttribute('stroke',color); path.setAttribute('stroke-width','2.8');
+  path.setAttribute('stroke',color); path.setAttribute('stroke-width','4');
   path.setAttribute('fill','none'); path.setAttribute('stroke-linecap','round');
   path.setAttribute('stroke-linejoin','round'); if(dashed) path.setAttribute('stroke-dasharray','10,7'); g.appendChild(path);
   if(pts.length>=2){ const last=sp[sp.length-1],prev=sp[sp.length-2];
     const angle=Math.atan2(last.y-prev.y,last.x-prev.x), hs=16, spread=.46;
     const tip=NS('polygon');
     tip.setAttribute('points',`${last.x},${last.y} ${last.x-hs*Math.cos(angle-spread)},${last.y-hs*Math.sin(angle-spread)} ${last.x-hs*Math.cos(angle+spread)},${last.y-hs*Math.sin(angle+spread)}`);
-    tip.setAttribute('fill',color); tip.setAttribute('stroke','#0b0b14'); tip.setAttribute('stroke-width','2'); tip.setAttribute('stroke-linejoin','round'); g.appendChild(tip); }
+    tip.setAttribute('fill',color); tip.setAttribute('stroke-linejoin','round'); g.appendChild(tip); }
   previewGrp.appendChild(g);
 }
 

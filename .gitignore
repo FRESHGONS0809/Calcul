@@ -1,3 +1,3 @@
-The modified file appears to be a source file (likely a Python file based on the Cyrillic characters in the filename), and there are no build artifacts, dependencies, or temporary files in the changes. Therefore, no additional ignore rules are needed.
+The modified file appears to be a source/config file (likely a Python file given the Cyrillic characters in what seems to be a class/function name), and there are no build artifacts, dependencies, or temporary files in the changes.
 
 (empty)
