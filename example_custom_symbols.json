@@ -1,0 +1,51 @@
+[
+  {
+    "id": "custom-infantry",
+    "name": "Пехота (своя)",
+    "category": "Сухопутные",
+    "path": "M12 2L12 22 M2 12L22 12 M5 5L19 19 M19 5L5 19",
+    "color": "#4CAF50"
+  },
+  {
+    "id": "custom-armor",
+    "name": "Танки (свои)",
+    "category": "Сухопутные",
+    "path": "M6 8L18 8L18 16L6 16Z M10 4L14 4L14 8L10 8Z M10 16L10 20 M14 16L14 20",
+    "color": "#2196F3"
+  },
+  {
+    "id": "custom-artillery",
+    "name": "Артиллерия (своя)",
+    "category": "Сухопутные",
+    "path": "M12 2L12 22 M8 6L16 6 M8 18L16 18 M6 10L18 10 M6 14L18 14",
+    "color": "#FF5722"
+  },
+  {
+    "id": "custom-hq",
+    "name": "Штаб (свой)",
+    "category": "Управление",
+    "path": "M12 3L20 7L20 17L12 21L4 17L4 7Z M12 8L12 16 M8 12L16 12",
+    "color": "#9C27B0"
+  },
+  {
+    "id": "custom-airbase",
+    "name": "Авиабаза (своя)",
+    "category": "ВВС",
+    "path": "M12 2L14 8L20 8L15 12L17 18L12 15L7 18L9 12L4 8L10 8Z",
+    "color": "#03A9F4"
+  },
+  {
+    "id": "custom-radar",
+    "name": "РЛС (своя)",
+    "category": "ВВС",
+    "path": "M12 2L12 22 M12 12L20 6 M12 12L4 6 M8 16L16 16",
+    "color": "#FFC107"
+  },
+  {
+    "id": "custom-minefield",
+    "name": "Минное поле (своё)",
+    "category": "Инженерные",
+    "path": "M12 6A6 6 0 1 1 12 18A6 6 0 1 1 12 6 M12 9A3 3 0 1 0 12 15A3 3 0 1 0 12 9",
+    "color": "#E91E63"
+  }
+]
