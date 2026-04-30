@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конструктор боевых операций v11 (NATO Symbols)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #1a1a2e; 
+            color: #eee; 
+            overflow: hidden;
+            user-select: none;
+        }
+        .container { display: flex; height: 100vh; }
+        
+        /* Left Panel */
+        .left-panel {
+            width: 320px;
+            background: #16213e;
+            padding: 15px;
+            overflow-y: auto;
+            border-right: 2px solid #0f3460;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .panel-section {
+            background: #0f3460;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        
+        .panel-section h3 {
+            margin-bottom: 10px;
+            color: #e94560;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        
+        .tool-btn {
+            aspect-ratio: 1;
+            background: #1a1a2e;
+            border: 2px solid #0f3460;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 20px;
+        }
+        
+        .tool-btn:hover {
+            background: #e94560;
+            transform: translateY(-2px);
+        }
+        
+        .tool-btn.active {
+            background: #e94560;
+            border-color: #fff;
+        }
+        
+        /* Symbol Categories */
+        .symbol-category {
+            margin-bottom: 15px;
+        }
+        
+        .category-title {
+            background: #e94560;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        .symbol-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        
+        .symbol-item {
+            background: #1a1a2e;
+            border: 2px solid #0f3460;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            min-height: 70px;
+        }
+        
+        .symbol-item:hover {
+            background: #0f3460;
+            transform: scale(1.05);
+        }
+        
+        .symbol-preview {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .symbol-label {
+            font-size: 9px;
+            text-align: center;
+            color: #aaa;
+            line-height: 1.1;
+        }
+        
+        /* Main Canvas */
+        .main-area {
+            flex: 1;
+            position: relative;
+            background: #0f0f1a;
+            overflow: hidden;
+        }
+        
+        #canvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+        
+        /* Right Panel */
+        .right-panel {
+            width: 280px;
+            background: #16213e;
+            padding: 15px;
+            border-left: 2px solid #0f3460;
+            overflow-y: auto;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #aaa;
+        }
+        
+        .color-picker {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: transparent;
+        }
+        
+        .slider-control {
+            width: 100%;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #0f3460;
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #e94560;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .action-btn {
+            width: 100%;
+            padding: 10px;
+            background: #e94560;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: #ff6b6b;
+            transform: translateY(-2px);
+        }
+        
+        .action-btn.secondary {
+            background: #0f3460;
+        }
+        
+        .action-btn.secondary:hover {
+            background: #1a4a7a;
+        }
+        
+        /* Top Bar */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 320px;
+            right: 280px;
+            background: #16213e;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            border-bottom: 2px solid #0f3460;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            background: #0f3460;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .zoom-btn:hover {
+            background: #e94560;
+        }
+        
+        #zoom-level {
+            font-size: 14px;
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        /* Context Menu */
+        .context-menu {
+            position: absolute;
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-radius: 6px;
+            padding: 8px 0;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .context-menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .context-menu-item:hover {
+            background: #e94560;
+        }
+        
+        .context-menu-divider {
+            height: 1px;
+            background: #0f3460;
+            margin: 8px 0;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            position: absolute;
+            bottom: 0;
+            left: 320px;
+            right: 280px;
+            background: #16213e;
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #aaa;
+            border-top: 2px solid #0f3460;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #0f3460;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #e94560;
+        }
+        
+        /* File Input Hidden */
+        #file-input, #symbols-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <div class="panel-section">
+                <h3>🛠️ Инструменты</h3>
+                <div class="tool-grid">
+                    <div class="tool-btn active" data-tool="select" title="Выделение">↖️</div>
+                    <div class="tool-btn" data-tool="line" title="Линия">📏</div>
+                    <div class="tool-btn" data-tool="flex-arrow" title="Гибкая стрелка">➰</div>
+                    <div class="tool-btn" data-tool="wide-arrow" title="Широкая стрелка">➤</div>
+                    <div class="tool-btn" data-tool="boundary" title="Граница">🚧</div>
+                    <div class="tool-btn" data-tool="trench" title="Траншея">⛏️</div>
+                    <div class="tool-btn" data-tool="minefield" title="Минное поле">💣</div>
+                    <div class="tool-btn" data-tool="text" title="Текст">📝</div>
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3>🏷️ Военные символы</h3>
+                <div id="symbols-container"></div>
+            </div>
+            
+            <button class="action-btn secondary" onclick="document.getElementById('symbols-input').click()">
+                📥 Импорт меток
+            </button>
+            <input type="file" id="symbols-input" accept=".json">
+        </div>
+        
+        <!-- Main Area -->
+        <div class="main-area">
+            <div class="top-bar">
+                <h2>⚔️ Конструктор боевых операций v11</h2>
+                <div class="zoom-controls">
+                    <button class="zoom-btn" onclick="zoomOut()">−</button>
+                    <span id="zoom-level">100%</span>
+                    <button class="zoom-btn" onclick="zoomIn()">+</button>
+                    <button class="zoom-btn" onclick="resetZoom()">⟲</button>
+                </div>
+            </div>
+            
+            <svg id="canvas" xmlns="http://www.w3.org/2000/svg">
+                <defs id="canvas-defs"></defs>
+                <g id="grid-layer"></g>
+                <g id="elements-layer"></g>
+                <g id="selection-layer"></g>
+                <g id="preview-layer"></g>
+            </svg>
+            
+            <div class="status-bar">
+                <span id="coordinates">Координаты: 0, 0</span>
+                <span id="elements-count">Элементов: 0</span>
+            </div>
+            
+            <div class="context-menu" id="context-menu">
+                <div class="context-menu-item" onclick="duplicateElement()">📋 Дублировать</div>
+                <div class="context-menu-item" onclick="bringToFront()">⬆️ На передний план</div>
+                <div class="context-menu-item" onclick="sendToBack()">⬇️ На задний план</div>
+                <div class="context-menu-divider"></div>
+                <div class="context-menu-item" onclick="deleteElement()">🗑️ Удалить</div>
+            </div>
+        </div>
+        
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <div class="panel-section">
+                <h3>🎨 Свойства</h3>
+                
+                <div class="control-group">
+                    <label>Цвет</label>
+                    <input type="color" class="color-picker" id="color-picker" value="#ff0000">
+                </div>
+                
+                <div class="control-group">
+                    <label>Толщина линии: <span id="stroke-width-value">3</span>px</label>
+                    <input type="range" class="slider-control" id="stroke-width" min="1" max="20" value="3">
+                </div>
+                
+                <div class="control-group">
+                    <label>Размер: <span id="size-value">40</span>px</label>
+                    <input type="range" class="slider-control" id="size-slider" min="20" max="100" value="40">
+                </div>
+                
+                <div class="control-group">
+                    <label>Прозрачность: <span id="opacity-value">100</span>%</label>
+                    <input type="range" class="slider-control" id="opacity-slider" min="10" max="100" value="100">
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <h3>📁 Файл</h3>
+                <button class="action-btn" onclick="newProject()">📄 Новый проект</button>
+                <button class="action-btn" onclick="document.getElementById('file-input').click()">📂 Открыть</button>
+                <input type="file" id="file-input" accept=".json">
+                <button class="action-btn" onclick="saveProject()">💾 Сохранить</button>
+                <button class="action-btn" onclick="exportSVG()">📤 Экспорт SVG</button>
+                <button class="action-btn" onclick="exportPNG()">🖼️ Экспорт PNG</button>
+            </div>
+            
+            <div class="panel-section">
+                <h3>ℹ️ Информация</h3>
+                <div style="font-size: 12px; color: #aaa; line-height: 1.6;">
+                    <p>• ЛКМ - выделение/перемещение</p>
+                    <p>• ПКМ - контекстное меню</p>
+                    <p>• Ctrl+Z - отменить</p>
+                    <p>• Delete - удалить</p>
+                    <p>• Колесо мыши - зум</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // NATO MILITARY SYMBOLS DEFINITIONS
+        // ============================================
+        const natoSymbols = [
+            // === INFANTRY & ARMOR ===
+            {
+                category: "Пехота и Бронетехника",
+                items: [
+                    { id: "light-infantry", label: "Light Infantry", symbol: "rectangle-x" },
+                    { id: "mechanized-infantry", label: "Mechanized Infantry", symbol: "oval-x" },
+                    { id: "stryker-infantry", label: "Stryker Infantry", symbol: "rectangle-x-wheels" },
+                    { id: "heavy-weapons", label: "Heavy Weapons", symbol: "rectangle-x-line" },
+                    { id: "armor", label: "Armor", symbol: "oval" },
+                    { id: "armored-cavalry", label: "Armored Cavalry", symbol: "oval-diagonal" },
+                    { id: "stryker-recon", label: "Stryker Recon", symbol: "oval-diagonal-wheels" },
+                    { id: "motorized-recon", label: "Motorized Recon", symbol: "diagonal-wheels" },
+                    { id: "light-recon", label: "Light Recon", symbol: "diagonal" },
+                    { id: "towed-howitzer", label: "Towed Howitzer", symbol: "circle" },
+                    { id: "sp-howitzer", label: "SP Howitzer", symbol: "oval-circle" },
+                    { id: "mlrs", label: "MLRS/HIMARS", symbol: "chevron-dots" }
+                ]
+            },
+            // === ENGINEERS & AVIATION ===
+            {
+                category: "Инженеры и Авиация",
+                items: [
+                    { id: "engineers", label: "Engineers", symbol: "rectangle-m" },
+                    { id: "armored-engineers", label: "Armored Engineers", symbol: "oval-m" },
+                    { id: "stryker-engineers", label: "Stryker Engineers", symbol: "rectangle-m-wheels" },
+                    { id: "stryker-at", label: "Stryker AT", symbol: "triangle-wheels" },
+                    { id: "aviation", label: "Aviation", symbol: "bowtie" },
+                    { id: "attack-aviation", label: "Attack Aviation", symbol: "bowtie-a" },
+                    { id: "recon-aviation", label: "Recon Aviation", symbol: "bowtie-r" },
+                    { id: "utility-aviation", label: "Utility Aviation", symbol: "bowtie-line" },
+                    { id: "cargo-aviation", label: "Cargo Aviation", symbol: "bowtie-c" },
+                    { id: "gsab", label: "GSAB", symbol: "bowtie-gsab" },
+                    { id: "asb", label: "ASB", symbol: "bowtie-asb" },
+                    { id: "dasb", label: "DASB", symbol: "bowtie-dasb" }
+                ]
+            },
+            // === SUPPORT & SPECIAL ===
+            {
+                category: "Поддержка и Спецвойска",
+                items: [
+                    { id: "amc", label: "AMC", symbol: "bowtie-amc" },
+                    { id: "amt", label: "AMT", symbol: "bowtie-amt" },
+                    { id: "air-defense", label: "Air Defense", symbol: "arc" },
+                    { id: "uav", label: "UAV", symbol: "chevron" },
+                    { id: "counterbattery", label: "Counterbattery Radar", symbol: "circle-antenna" },
+                    { id: "signals", label: "Signals", symbol: "lightning" },
+                    { id: "chemical", label: "Chemical", symbol: "double-circle" },
+                    { id: "supply", label: "Supply", symbol: "lines-horizontal" },
+                    { id: "maintenance", label: "Maintenance", symbol: "brackets" },
+                    { id: "medical", label: "Medical", symbol: "cross" },
+                    { id: "transportation", label: "Transportation", symbol: "wheel" }
+                ]
+            }
+        ];
+
+        // ============================================
+        // SYMBOL RENDERING FUNCTIONS
+        // ============================================
+        function renderSymbol(symbolType, size, color) {
+            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            const half = size / 2;
+            const quarter = size / 4;
+            
+            switch(symbolType) {
+                // === RECTANGLE BASE ===
+                case "rectangle-x":
+                    g.innerHTML = `
+                        <rect x="${-half}" y="${-quarter}" width="${size}" height="${size/2}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-half*0.6}" y1="${-quarter*0.6}" x2="${half*0.6}" y2="${quarter*0.6}" stroke="${color}" stroke-width="2"/>
+                        <line x1="${half*0.6}" y1="${-quarter*0.6}" x2="${-half*0.6}" y2="${quarter*0.6}" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "rectangle-x-wheels":
+                    g.innerHTML = `
+                        <rect x="${-half}" y="${-quarter}" width="${size}" height="${size/2}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-half*0.6}" y1="${-quarter*0.6}" x2="${half*0.6}" y2="${quarter*0.6}" stroke="${color}" stroke-width="2"/>
+                        <line x1="${half*0.6}" y1="${-quarter*0.6}" x2="${-half*0.6}" y2="${quarter*0.6}" stroke="${color}" stroke-width="2"/>
+                        <circle cx="${-half*0.7}" cy="${quarter*1.2}" r="${size*0.08}" fill="${color}"/>
+                        <circle cx="${half*0.7}" cy="${quarter*1.2}" r="${size*0.08}" fill="${color}"/>
+                    `;
+                    break;
+                    
+                case "rectangle-x-line":
+                    g.innerHTML = `
+                        <rect x="${-half}" y="${-quarter}" width="${size}" height="${size/2}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-half*0.6}" y1="${-quarter*0.6}" x2="${half*0.6}" y2="${quarter*0.6}" stroke="${color}" stroke-width="2"/>
+                        <line x1="${half*0.6}" y1="${-quarter*0.6}" x2="${-half*0.6}" y2="${quarter*0.6}" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-half*0.5}" y1="0" x2="${half*0.5}" y2="0" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "rectangle-m":
+                    g.innerHTML = `
+                        <rect x="${-half}" y="${-quarter}" width="${size}" height="${size/2}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <path d="M${-half*0.4},${-quarter*0.5} L${-half*0.4},${quarter*0.5} L${-half*0.1},${-quarter*0.5} L${half*0.1},${quarter*0.5} L${half*0.1},${-quarter*0.5} L${half*0.4},${quarter*0.5}" fill="none" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "rectangle-m-wheels":
+                    g.innerHTML = `
+                        <rect x="${-half}" y="${-quarter}" width="${size}" height="${size/2}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <path d="M${-half*0.4},${-quarter*0.5} L${-half*0.4},${quarter*0.5} L${-half*0.1},${-quarter*0.5} L${half*0.1},${quarter*0.5} L${half*0.1},${-quarter*0.5} L${half*0.4},${quarter*0.5}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <circle cx="${-half*0.7}" cy="${quarter*1.2}" r="${size*0.08}" fill="${color}"/>
+                        <circle cx="${half*0.7}" cy="${quarter*1.2}" r="${size*0.08}" fill="${color}"/>
+                    `;
+                    break;
+                    
+                // === OVAL BASE ===
+                case "oval-x":
+                    g.innerHTML = `
+                        <ellipse cx="0" cy="0" rx="${half*0.9}" ry="${quarter*1.3}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-half*0.5}" y1="${-quarter*0.8}" x2="${half*0.5}" y2="${quarter*0.8}" stroke="${color}" stroke-width="2"/>
+                        <line x1="${half*0.5}" y1="${-quarter*0.8}" x2="${-half*0.5}" y2="${quarter*0.8}" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "oval":
+                    g.innerHTML = `<ellipse cx="0" cy="0" rx="${half*0.9}" ry="${quarter*1.3}" fill="none" stroke="${color}" stroke-width="2"/>`;
+                    break;
+                    
+                case "oval-diagonal":
+                    g.innerHTML = `
+                        <ellipse cx="0" cy="0" rx="${half*0.9}" ry="${quarter*1.3}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-half*0.6}" y1="${quarter*0.8}" x2="${half*0.6}" y2="${-quarter*0.8}" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "oval-diagonal-wheels":
+                    g.innerHTML = `
+                        <ellipse cx="0" cy="0" rx="${half*0.9}" ry="${quarter*1.3}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-half*0.6}" y1="${quarter*0.8}" x2="${half*0.6}" y2="${-quarter*0.8}" stroke="${color}" stroke-width="2"/>
+                        <circle cx="${-half*0.7}" cy="${quarter*1.2}" r="${size*0.08}" fill="${color}"/>
+                        <circle cx="${half*0.7}" cy="${quarter*1.2}" r="${size*0.08}" fill="${color}"/>
+                    `;
+                    break;
+                    
+                case "oval-m":
+                    g.innerHTML = `
+                        <ellipse cx="0" cy="0" rx="${half*0.9}" ry="${quarter*1.3}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <path d="M${-half*0.4},${-quarter*0.6} L${-half*0.4},${quarter*0.6} L${-half*0.1},${-quarter*0.6} L${half*0.1},${quarter*0.6} L${half*0.1},${-quarter*0.6} L${half*0.4},${quarter*0.6}" fill="none" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "oval-circle":
+                    g.innerHTML = `
+                        <ellipse cx="0" cy="0" rx="${half*0.9}" ry="${quarter*1.3}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <circle cx="0" cy="0" r="${size*0.15}" fill="${color}"/>
+                    `;
+                    break;
+                    
+                // === SIMPLE SHAPES ===
+                case "diagonal":
+                    g.innerHTML = `<line x1="${-half*0.6}" y1="${quarter*0.8}" x2="${half*0.6}" y2="${-quarter*0.8}" stroke="${color}" stroke-width="3"/>`;
+                    break;
+                    
+                case "diagonal-wheels":
+                    g.innerHTML = `
+                        <line x1="${-half*0.6}" y1="${quarter*0.8}" x2="${half*0.6}" y2="${-quarter*0.8}" stroke="${color}" stroke-width="3"/>
+                        <circle cx="${-half*0.7}" cy="${quarter*1.2}" r="${size*0.08}" fill="${color}"/>
+                        <circle cx="${half*0.7}" cy="${quarter*1.2}" r="${size*0.08}" fill="${color}"/>
+                    `;
+                    break;
+                    
+                case "circle":
+                    g.innerHTML = `<circle cx="0" cy="0" r="${size*0.2}" fill="${color}"/>`;
+                    break;
+                    
+                case "chevron-dots":
+                    g.innerHTML = `
+                        <path d="M${-half*0.4},${quarter*0.3} L0,${-quarter*0.5} L${half*0.4},${quarter*0.3}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <circle cx="${-half*0.2}" cy="${quarter*0.6}" r="${size*0.06}" fill="${color}"/>
+                        <circle cx="0" cy="${quarter*0.7}" r="${size*0.06}" fill="${color}"/>
+                        <circle cx="${half*0.2}" cy="${quarter*0.6}" r="${size*0.06}" fill="${color}"/>
+                    `;
+                    break;
+                    
+                case "triangle-wheels":
+                    g.innerHTML = `
+                        <path d="M0,${-quarter*0.6} L${-half*0.4},${quarter*0.6} L${half*0.4},${quarter*0.6} Z" fill="none" stroke="${color}" stroke-width="2"/>
+                        <circle cx="${-half*0.5}" cy="${quarter*1.2}" r="${size*0.08}" fill="${color}"/>
+                        <circle cx="${half*0.5}" cy="${quarter*1.2}" r="${size*0.08}" fill="${color}"/>
+                    `;
+                    break;
+                    
+                // === AVIATION (BOWTIE) ===
+                case "bowtie":
+                    g.innerHTML = `
+                        <path d="M${-half*0.6},${-quarter*0.3} L0,0 L${-half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <path d="M${half*0.6},${-quarter*0.3} L0,0 L${half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                    `;
+                    break;
+                    
+                case "bowtie-a":
+                    g.innerHTML = `
+                        <path d="M${-half*0.6},${-quarter*0.3} L0,0 L${-half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <path d="M${half*0.6},${-quarter*0.3} L0,0 L${half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <text x="0" y="${quarter*0.2}" font-size="${size*0.3}" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">A</text>
+                    `;
+                    break;
+                    
+                case "bowtie-r":
+                    g.innerHTML = `
+                        <path d="M${-half*0.6},${-quarter*0.3} L0,0 L${-half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <path d="M${half*0.6},${-quarter*0.3} L0,0 L${half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <text x="0" y="${quarter*0.2}" font-size="${size*0.3}" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">R</text>
+                    `;
+                    break;
+                    
+                case "bowtie-line":
+                    g.innerHTML = `
+                        <path d="M${-half*0.6},${-quarter*0.3} L0,0 L${-half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <path d="M${half*0.6},${-quarter*0.3} L0,0 L${half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <line x1="0" y1="${-quarter*0.5}" x2="0" y2="${quarter*0.5}" stroke="white" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "bowtie-c":
+                    g.innerHTML = `
+                        <path d="M${-half*0.6},${-quarter*0.3} L0,0 L${-half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <path d="M${half*0.6},${-quarter*0.3} L0,0 L${half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <text x="0" y="${quarter*0.2}" font-size="${size*0.3}" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">C</text>
+                    `;
+                    break;
+                    
+                case "bowtie-gsab":
+                    g.innerHTML = `
+                        <path d="M${-half*0.6},${-quarter*0.3} L0,0 L${-half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <path d="M${half*0.6},${-quarter*0.3} L0,0 L${half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <text x="0" y="${quarter*0.1}" font-size="${size*0.12}" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">GSAB</text>
+                    `;
+                    break;
+                    
+                case "bowtie-asb":
+                    g.innerHTML = `
+                        <path d="M${-half*0.6},${-quarter*0.3} L0,0 L${-half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <path d="M${half*0.6},${-quarter*0.3} L0,0 L${half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <text x="0" y="${quarter*0.2}" font-size="${size*0.15}" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">ASB</text>
+                    `;
+                    break;
+                    
+                case "bowtie-dasb":
+                    g.innerHTML = `
+                        <path d="M${-half*0.6},${-quarter*0.3} L0,0 L${-half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <path d="M${half*0.6},${-quarter*0.3} L0,0 L${half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <text x="0" y="${quarter*0.1}" font-size="${size*0.1}" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">DASB</text>
+                    `;
+                    break;
+                    
+                case "bowtie-amc":
+                    g.innerHTML = `
+                        <path d="M${-half*0.6},${-quarter*0.3} L0,0 L${-half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <path d="M${half*0.6},${-quarter*0.3} L0,0 L${half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <text x="0" y="${quarter*0.1}" font-size="${size*0.1}" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">AMC</text>
+                    `;
+                    break;
+                    
+                case "bowtie-amt":
+                    g.innerHTML = `
+                        <path d="M${-half*0.6},${-quarter*0.3} L0,0 L${-half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <path d="M${half*0.6},${-quarter*0.3} L0,0 L${half*0.6},${quarter*0.3} Z" fill="${color}"/>
+                        <text x="0" y="${quarter*0.2}" font-size="${size*0.15}" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">AMT</text>
+                    `;
+                    break;
+                    
+                // === SPECIAL SYMBOLS ===
+                case "arc":
+                    g.innerHTML = `<path d="M${-half*0.6},${quarter*0.6} A${half*0.6},${quarter*0.6} 0 0,1 ${half*0.6},${quarter*0.6}" fill="none" stroke="${color}" stroke-width="3"/>`;
+                    break;
+                    
+                case "chevron":
+                    g.innerHTML = `<path d="M${-half*0.4},${-quarter*0.2} L0,${quarter*0.4} L${half*0.4},${-quarter*0.2}" fill="none" stroke="${color}" stroke-width="3"/>`;
+                    break;
+                    
+                case "circle-antenna":
+                    g.innerHTML = `
+                        <circle cx="0" cy="0" r="${size*0.25}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <line x1="0" y1="${-size*0.25}" x2="0" y2="${-size*0.4}" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-size*0.15}" y1="${-size*0.35}" x2="${size*0.15}" y2="${-size*0.35}" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "lightning":
+                    g.innerHTML = `<path d="M${-half*0.2},${-quarter*0.6} L${half*0.3},${-quarter*0.2} L${-half*0.1},${-quarter*0.2} L${half*0.2},${quarter*0.6} L${-half*0.3},${quarter*0.2} L${half*0.1},${quarter*0.2} Z" fill="${color}"/>`;
+                    break;
+                    
+                case "double-circle":
+                    g.innerHTML = `
+                        <circle cx="${-size*0.15}" cy="0" r="${size*0.15}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <circle cx="${size*0.15}" cy="0" r="${size*0.15}" fill="none" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "lines-horizontal":
+                    g.innerHTML = `
+                        <line x1="${-half*0.6}" y1="${-quarter*0.3}" x2="${half*0.6}" y2="${-quarter*0.3}" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-half*0.6}" y1="0" x2="${half*0.6}" y2="0" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-half*0.6}" y1="${quarter*0.3}" x2="${half*0.6}" y2="${quarter*0.3}" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "brackets":
+                    g.innerHTML = `
+                        <path d="M${-half*0.4},${-quarter*0.6} L${-half*0.6},${-quarter*0.6} L${-half*0.6},${quarter*0.6} L${-half*0.4},${quarter*0.6}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <path d="M${half*0.4},${-quarter*0.6} L${half*0.6},${-quarter*0.6} L${half*0.6},${quarter*0.6} L${half*0.4},${quarter*0.6}" fill="none" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+                    
+                case "cross":
+                    g.innerHTML = `
+                        <rect x="${-half*0.15}" y="${-quarter*0.6}" width="${size*0.3}" height="${size*1.2}" fill="${color}"/>
+                        <rect x="${-half*0.6}" y="${-quarter*0.15}" width="${size*1.2}" height="${size*0.3}" fill="${color}"/>
+                    `;
+                    break;
+                    
+                case "wheel":
+                    g.innerHTML = `
+                        <circle cx="0" cy="0" r="${size*0.3}" fill="none" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-size*0.3}" y1="0" x2="${size*0.3}" y2="0" stroke="${color}" stroke-width="2"/>
+                        <line x1="0" y1="${-size*0.3}" x2="0" y2="${size*0.3}" stroke="${color}" stroke-width="2"/>
+                        <line x1="${-size*0.21}" y1="${-size*0.21}" x2="${size*0.21}" y2="${size*0.21}" stroke="${color}" stroke-width="2"/>
+                        <line x1="${size*0.21}" y1="${-size*0.21}" x2="${-size*0.21}" y2="${size*0.21}" stroke="${color}" stroke-width="2"/>
+                    `;
+                    break;
+            }
+            
+            return g;
+        }
+
+        // ============================================
+        // APPLICATION STATE
+        // ============================================
+        const state = {
+            currentTool: 'select',
+            selectedElement: null,
+            elements: [],
+            zoom: 1,
+            panX: 0,
+            panY: 0,
+            isDrawing: false,
+            startPoint: null,
+            history: [],
+            historyIndex: -1
+        };
+
+        // ============================================
+        // DOM ELEMENTS
+        // ============================================
+        const canvas = document.getElementById('canvas');
+        const elementsLayer = document.getElementById('elements-layer');
+        const previewLayer = document.getElementById('preview-layer');
+        const selectionLayer = document.getElementById('selection-layer');
+        const gridLayer = document.getElementById('grid-layer');
+        const symbolsContainer = document.getElementById('symbols-container');
+        const contextMenu = document.getElementById('context-menu');
+        
+        // Controls
+        const colorPicker = document.getElementById('color-picker');
+        const strokeWidthSlider = document.getElementById('stroke-width');
+        const sizeSlider = document.getElementById('size-slider');
+        const opacitySlider = document.getElementById('opacity-slider');
+        
+        // Displays
+        const strokeWidthValue = document.getElementById('stroke-width-value');
+        const sizeValue = document.getElementById('size-value');
+        const opacityValue = document.getElementById('opacity-value');
+        const coordinatesDisplay = document.getElementById('coordinates');
+        const elementsCountDisplay = document.getElementById('elements-count');
+        const zoomLevelDisplay = document.getElementById('zoom-level');
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        function init() {
+            renderSymbols();
+            drawGrid();
+            setupEventListeners();
+            updateElementsCount();
+        }
+
+        // ============================================
+        // RENDER SYMBOLS PANEL
+        // ============================================
+        function renderSymbols() {
+            symbolsContainer.innerHTML = '';
+            
+            natoSymbols.forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'symbol-category';
+                
+                const title = document.createElement('div');
+                title.className = 'category-title';
+                title.textContent = category.category;
+                categoryDiv.appendChild(title);
+                
+                const grid = document.createElement('div');
+                grid.className = 'symbol-grid';
+                
+                category.items.forEach(item => {
+                    const symbolItem = document.createElement('div');
+                    symbolItem.className = 'symbol-item';
+                    symbolItem.title = item.label;
+                    
+                    const preview = document.createElement('div');
+                    preview.className = 'symbol-preview';
+                    const svg = renderSymbol(item.symbol, 30, '#e94560');
+                    preview.appendChild(svg);
+                    
+                    const label = document.createElement('div');
+                    label.className = 'symbol-label';
+                    label.textContent = item.label;
+                    
+                    symbolItem.appendChild(preview);
+                    symbolItem.appendChild(label);
+                    
+                    symbolItem.addEventListener('click', () => addSymbol(item));
+                    
+                    grid.appendChild(symbolItem);
+                });
+                
+                categoryDiv.appendChild(grid);
+                symbolsContainer.appendChild(categoryDiv);
+            });
+        }
+
+        // ============================================
+        // ADD SYMBOL TO CANVAS
+        // ============================================
+        function addSymbol(item) {
+            const element = {
+                id: Date.now(),
+                type: 'symbol',
+                symbolType: item.symbol,
+                label: item.label,
+                x: canvas.clientWidth / 2,
+                y: canvas.clientHeight / 2,
+                size: parseInt(sizeSlider.value),
+                color: colorPicker.value,
+                opacity: parseInt(opacitySlider.value) / 100,
+                rotation: 0
+            };
+            
+            state.elements.push(element);
+            renderElement(element);
+            saveState();
+            updateElementsCount();
+            selectElement(element.id);
+        }
+
+        // ============================================
+        // RENDER ELEMENT
+        // ============================================
+        function renderElement(element) {
+            const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute('data-id', element.id);
+            g.setAttribute('transform', `translate(${element.x}, ${element.y}) rotate(${element.rotation})`);
+            g.style.opacity = element.opacity;
+            
+            if (element.type === 'symbol') {
+                const symbol = renderSymbol(element.symbolType, element.size, element.color);
+                g.appendChild(symbol);
+            }
+            
+            elementsLayer.appendChild(g);
+            
+            // Make draggable
+            g.addEventListener('mousedown', (e) => startDrag(e, element));
+            
+            return g;
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        function setupEventListeners() {
+            // Tool buttons
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    state.currentTool = btn.dataset.tool;
+                });
+            });
+            
+            // Controls
+            colorPicker.addEventListener('input', updateSelectedElement);
+            strokeWidthSlider.addEventListener('input', () => {
+                strokeWidthValue.textContent = strokeWidthSlider.value;
+                updateSelectedElement();
+            });
+            sizeSlider.addEventListener('input', () => {
+                sizeValue.textContent = sizeSlider.value;
+                updateSelectedElement();
+            });
+            opacitySlider.addEventListener('input', () => {
+                opacityValue.textContent = opacitySlider.value;
+                updateSelectedElement();
+            });
+            
+            // Canvas events
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', handleMouseUp);
+            canvas.addEventListener('wheel', handleWheel);
+            canvas.addEventListener('contextmenu', handleContextMenu);
+            
+            // File inputs
+            document.getElementById('file-input').addEventListener('change', loadProject);
+            document.getElementById('symbols-input').addEventListener('change', importSymbols);
+            
+            // Keyboard
+            document.addEventListener('keydown', handleKeyboard);
+            
+            // Close context menu
+            document.addEventListener('click', (e) => {
+                if (!contextMenu.contains(e.target)) {
+                    contextMenu.style.display = 'none';
+                }
+            });
+        }
+
+        // ============================================
+        // MOUSE HANDLERS
+        // ============================================
+        function startDrag(e, element) {
+            if (state.currentTool !== 'select') return;
+            e.stopPropagation();
+            selectElement(element.id);
+            state.isDragging = true;
+            state.dragOffset = {
+                x: e.clientX - element.x,
+                y: e.clientY - element.y
+            };
+        }
+
+        function handleMouseMove(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left - state.panX) / state.zoom;
+            const y = (e.clientY - rect.top - state.panY) / state.zoom;
+            
+            coordinatesDisplay.textContent = `Координаты: ${Math.round(x)}, ${Math.round(y)}`;
+            
+            if (state.isDragging && state.selectedElement) {
+                const element = state.elements.find(el => el.id === state.selectedElement.id);
+                if (element) {
+                    element.x = e.clientX - rect.left - state.dragOffset.x;
+                    element.y = e.clientY - rect.top - state.dragOffset.y;
+                    updateElementRender(element);
+                }
+            }
+        }
+
+        function handleMouseUp(e) {
+            state.isDragging = false;
+            if (state.isDrawing) {
+                state.isDrawing = false;
+                previewLayer.innerHTML = '';
+            }
+        }
+
+        function handleWheel(e) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            state.zoom = Math.max(0.1, Math.min(5, state.zoom * delta));
+            updateTransform();
+            zoomLevelDisplay.textContent = `${Math.round(state.zoom * 100)}%`;
+        }
+
+        function handleContextMenu(e) {
+            e.preventDefault();
+            if (state.selectedElement) {
+                contextMenu.style.display = 'block';
+                contextMenu.style.left = `${e.clientX}px`;
+                contextMenu.style.top = `${e.clientY}px`;
+            }
+        }
+
+        function handleKeyboard(e) {
+            if (e.key === 'Delete' && state.selectedElement) {
+                deleteElement();
+            }
+            if (e.ctrlKey && e.key === 'z') {
+                undo();
+            }
+        }
+
+        // ============================================
+        // ELEMENT MANAGEMENT
+        // ============================================
+        function selectElement(id) {
+            state.selectedElement = state.elements.find(el => el.id === id);
+            selectionLayer.innerHTML = '';
+            
+            if (state.selectedElement) {
+                const el = state.selectedElement;
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute('transform', `translate(${el.x}, ${el.y})`);
+                
+                // Selection box
+                const box = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                const size = el.size || 50;
+                box.setAttribute('x', -size/2 - 5);
+                box.setAttribute('y', -size/2 - 5);
+                box.setAttribute('width', size + 10);
+                box.setAttribute('height', size + 10);
+                box.setAttribute('fill', 'none');
+                box.setAttribute('stroke', '#00ffff');
+                box.setAttribute('stroke-width', '2');
+                box.setAttribute('stroke-dasharray', '5,5');
+                
+                g.appendChild(box);
+                selectionLayer.appendChild(g);
+                
+                // Update controls
+                colorPicker.value = el.color;
+                if (el.size) sizeSlider.value = el.size;
+                if (el.opacity) opacitySlider.value = el.opacity * 100;
+            }
+        }
+
+        function updateElementRender(element) {
+            const existing = elementsLayer.querySelector(`[data-id="${element.id}"]`);
+            if (existing) {
+                existing.remove();
+            }
+            renderElement(element);
+        }
+
+        function updateSelectedElement() {
+            if (!state.selectedElement) return;
+            
+            const el = state.selectedElement;
+            el.color = colorPicker.value;
+            el.size = parseInt(sizeSlider.value);
+            el.opacity = parseInt(opacitySlider.value) / 100;
+            
+            updateElementRender(el);
+            saveState();
+        }
+
+        function deleteElement() {
+            if (!state.selectedElement) return;
+            
+            const index = state.elements.findIndex(el => el.id === state.selectedElement.id);
+            if (index > -1) {
+                state.elements.splice(index, 1);
+                elementsLayer.querySelector(`[data-id="${state.selectedElement.id}"]`)?.remove();
+                state.selectedElement = null;
+                selectionLayer.innerHTML = '';
+                saveState();
+                updateElementsCount();
+            }
+            contextMenu.style.display = 'none';
+        }
+
+        function duplicateElement() {
+            if (!state.selectedElement) return;
+            
+            const original = state.selectedElement;
+            const duplicate = {
+                ...original,
+                id: Date.now(),
+                x: original.x + 20,
+                y: original.y + 20
+            };
+            
+            state.elements.push(duplicate);
+            renderElement(duplicate);
+            saveState();
+            updateElementsCount();
+            selectElement(duplicate.id);
+            contextMenu.style.display = 'none';
+        }
+
+        function bringToFront() {
+            if (!state.selectedElement) return;
+            const index = state.elements.findIndex(el => el.id === state.selectedElement.id);
+            if (index > -1) {
+                const [el] = state.elements.splice(index, 1);
+                state.elements.push(el);
+                elementsLayer.innerHTML = '';
+                state.elements.forEach(renderElement);
+                saveState();
+            }
+            contextMenu.style.display = 'none';
+        }
+
+        function sendToBack() {
+            if (!state.selectedElement) return;
+            const index = state.elements.findIndex(el => el.id === state.selectedElement.id);
+            if (index > -1) {
+                const [el] = state.elements.splice(index, 1);
+                state.elements.unshift(el);
+                elementsLayer.innerHTML = '';
+                state.elements.forEach(renderElement);
+                saveState();
+            }
+            contextMenu.style.display = 'none';
+        }
+
+        // ============================================
+        // FILE OPERATIONS
+        // ============================================
+        function saveProject() {
+            const data = {
+                version: '11',
+                elements: state.elements,
+                zoom: state.zoom,
+                panX: state.panX,
+                panY: state.panY
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `project-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function loadProject(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    // Validate
+                    if (!data.elements || !Array.isArray(data.elements)) {
+                        throw new Error('Неверный формат файла');
+                    }
+                    
+                    state.elements = data.elements;
+                    state.zoom = data.zoom || 1;
+                    state.panX = data.panX || 0;
+                    state.panY = data.panY || 0;
+                    
+                    elementsLayer.innerHTML = '';
+                    state.elements.forEach(renderElement);
+                    updateTransform();
+                    updateElementsCount();
+                    zoomLevelDisplay.textContent = `${Math.round(state.zoom * 100)}%`;
+                    
+                    alert('Проект успешно загружен!');
+                } catch (error) {
+                    alert('Ошибка загрузки проекта: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        function newProject() {
+            if (confirm('Создать новый проект? Все несохраненные изменения будут потеряны.')) {
+                state.elements = [];
+                elementsLayer.innerHTML = '';
+                state.selectedElement = null;
+                selectionLayer.innerHTML = '';
+                saveState();
+                updateElementsCount();
+            }
+        }
+
+        function exportSVG() {
+            const svgData = new XMLSerializer().serializeToString(canvas);
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `map-${Date.now()}.svg`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportPNG() {
+            const svgData = new XMLSerializer().serializeToString(canvas);
+            const canvas2D = document.createElement('canvas');
+            const ctx = canvas2D.getContext('2d');
+            const img = new Image();
+            
+            canvas2D.width = canvas.clientWidth;
+            canvas2D.height = canvas.clientHeight;
+            
+            img.onload = () => {
+                ctx.fillStyle = '#0f0f1a';
+                ctx.fillRect(0, 0, canvas2D.width, canvas2D.height);
+                ctx.drawImage(img, 0, 0);
+                
+                canvas2D.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `map-${Date.now()}.png`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                });
+            };
+            
+            img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+        }
+
+        function importSymbols(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const symbols = JSON.parse(event.target.result);
+                    
+                    if (!Array.isArray(symbols)) {
+                        throw new Error('Файл должен содержать массив категорий');
+                    }
+                    
+                    // Add to existing symbols or replace
+                    if (confirm('Заменить текущие символы или добавить к ним?\nOK - Заменить\nCancel - Добавить')) {
+                        natoSymbols.length = 0;
+                    }
+                    
+                    symbols.forEach(cat => {
+                        natoSymbols.push(cat);
+                    });
+                    
+                    renderSymbols();
+                    alert('Символы успешно импортированы!');
+                } catch (error) {
+                    alert('Ошибка импорта: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function drawGrid() {
+            gridLayer.innerHTML = '';
+            const gridSize = 50 * state.zoom;
+            const width = canvas.clientWidth;
+            const height = canvas.clientHeight;
+            
+            const pattern = document.createElementNS("http://www.w3.org/2000/svg", "pattern");
+            pattern.setAttribute('id', 'grid-pattern');
+            pattern.setAttribute('width', gridSize);
+            pattern.setAttribute('height', gridSize);
+            pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+            
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute('d', `M ${gridSize} 0 L 0 0 0 ${gridSize}`);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', '#1a1a2e');
+            path.setAttribute('stroke-width', '1');
+            
+            pattern.appendChild(path);
+            
+            const defs = document.getElementById('canvas-defs');
+            defs.innerHTML = '';
+            defs.appendChild(pattern);
+            
+            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rect.setAttribute('width', '100%');
+            rect.setAttribute('height', '100%');
+            rect.setAttribute('fill', 'url(#grid-pattern)');
+            
+            gridLayer.appendChild(rect);
+        }
+
+        function updateTransform() {
+            elementsLayer.setAttribute('transform', `translate(${state.panX}, ${state.panY}) scale(${state.zoom})`);
+            selectionLayer.setAttribute('transform', `translate(${state.panX}, ${state.panY}) scale(${state.zoom})`);
+            drawGrid();
+        }
+
+        function zoomIn() {
+            state.zoom = Math.min(5, state.zoom * 1.2);
+            updateTransform();
+            zoomLevelDisplay.textContent = `${Math.round(state.zoom * 100)}%`;
+        }
+
+        function zoomOut() {
+            state.zoom = Math.max(0.1, state.zoom / 1.2);
+            updateTransform();
+            zoomLevelDisplay.textContent = `${Math.round(state.zoom * 100)}%`;
+        }
+
+        function resetZoom() {
+            state.zoom = 1;
+            state.panX = 0;
+            state.panY = 0;
+            updateTransform();
+            zoomLevelDisplay.textContent = '100%';
+        }
+
+        function updateElementsCount() {
+            elementsCountDisplay.textContent = `Элементов: ${state.elements.length}`;
+        }
+
+        function saveState() {
+            state.historyIndex++;
+            state.history = state.history.slice(0, state.historyIndex);
+            state.history.push(JSON.parse(JSON.stringify(state.elements)));
+        }
+
+        function undo() {
+            if (state.historyIndex > 0) {
+                state.historyIndex--;
+                state.elements = JSON.parse(JSON.stringify(state.history[state.historyIndex]));
+                elementsLayer.innerHTML = '';
+                state.elements.forEach(renderElement);
+                updateElementsCount();
+            }
+        }
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>
