@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Конструктор боевых операций</title>
+<style>
+:root {
+  --bg: #0e0e18;
+  --panel: #17172a;
+  --panel2: #1e1e34;
+  --border: #2e2e4e;
+  --accent: #f0c040;
+  --accent-dim: rgba(240,192,64,.15);
+  --friendly: #e04040;
+  --enemy: #4060e0;
+  --success: #62d394;
+  --danger: #ff6b6b;
+  --text: #d8d8ec;
+  --text-dim: #7070a0;
+  --shadow: 0 14px 40px rgba(0,0,0,.32);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+.app{display:flex;height:100vh}
+
+.sidebar{width:294px;min-width:294px;background:linear-gradient(180deg,var(--panel),#121224);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-header{padding:12px 14px;font-size:12px;font-weight:800;letter-spacing:.7px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.28);display:flex;align-items:center;gap:7px;white-space:nowrap;color:var(--accent)}
+.sidebar-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
+.sidebar-scroll::-webkit-scrollbar{width:5px}
+.sidebar-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+.sec-title{padding:8px 14px 4px;font-size:9.5px;text-transform:uppercase;color:var(--text-dim);letter-spacing:1.2px;font-weight:600;border-top:1px solid rgba(255,255,255,.04);margin-top:2px}
+.act-btn{display:flex;align-items:center;gap:8px;padding:7px 14px;background:none;border:none;color:var(--text);cursor:pointer;font-size:12px;width:100%;text-align:left;transition:background .12s,color .12s,border-color .12s,transform .12s;border-left:2px solid transparent}
+.act-btn:hover{background:rgba(255,255,255,.07);color:#fff}
+.act-btn:active{transform:translateY(1px)}
+.act-btn.active{background:linear-gradient(90deg,var(--accent-dim),rgba(240,192,64,.05));border-left-color:var(--accent);color:var(--accent)}
+.act-btn .icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+
+.sym-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px 10px 9px}
+.sym-btn{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:5px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:.12s;color:var(--text);font-size:8.5px;white-space:nowrap}
+.sym-btn:hover{background:var(--accent-dim);border-color:var(--accent)}
+.sym-btn.active{background:rgba(240,192,64,.25);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.sym-btn svg{width:32px;height:22px;flex-shrink:0}
+
+.slider-row{padding:6px 14px}
+.slider-row label{display:block;font-size:10.5px;color:var(--text-dim);margin-bottom:3px}
+.slider-row input[type=range]{width:100%;accent-color:var(--accent)}
+.slider-row .val{font-size:10.5px;color:var(--accent);text-align:right}
+.color-row{display:flex;align-items:center;gap:7px;padding:6px 14px;flex-wrap:wrap}
+.color-row label{font-size:11px;white-space:nowrap;color:var(--text-dim)}
+.color-row input[type=color]{width:30px;height:24px;border:1px solid var(--border);background:rgba(255,255,255,.04);cursor:pointer;border-radius:4px;padding:0}
+.force-toggle{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px 14px 7px}
+.force-btn{border:1px solid var(--border);background:rgba(255,255,255,.045);color:var(--text);border-radius:6px;padding:6px 8px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.12s}
+.force-btn:before{content:'';width:9px;height:9px;border-radius:50%;background:var(--friendly);box-shadow:0 0 0 2px rgba(255,255,255,.08)}
+.force-btn.enemy:before{background:var(--enemy)}
+.force-btn.active{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);box-shadow:0 0 0 1px rgba(240,192,64,.12)}
+.export-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:7px 14px 4px;font-size:11px;color:var(--text-dim)}
+.export-row select{background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:4px 8px;outline:none}
+.divider{height:1px;background:var(--border);margin:2px 0}
+.sidebar-footer{border-top:1px solid var(--border);flex-shrink:0;background:rgba(0,0,0,.24);padding-bottom:6px}
+
+.canvas-area{flex:1;position:relative;overflow:hidden;background:#191926}
+.canvas-area svg{width:100%;height:100%;display:block}
+.canvas-area.tool-draw svg,.canvas-area.tool-symbol svg{cursor:crosshair}
+.canvas-area.tool-pan svg{cursor:grab}
+.canvas-area.panning svg{cursor:grabbing}
+
+.topbar{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:3px;background:rgba(23,23,42,.95);border:1px solid var(--border);border-radius:8px;padding:3px;backdrop-filter:blur(8px);box-shadow:var(--shadow)}
+.topbar .act-btn{border-radius:5px;padding:5px 11px;font-size:11px;border-left:none}
+
+.zoom-wrap{position:absolute;bottom:36px;right:14px;display:flex;flex-direction:column;gap:3px}
+.zoom-btn{width:30px;height:30px;background:rgba(23,23,42,.9);border:1px solid var(--border);color:var(--text);font-size:15px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s}
+.zoom-btn:hover{background:var(--accent-dim);border-color:var(--accent)}
+.zoom-lbl{position:absolute;bottom:10px;right:14px;background:rgba(23,23,42,.9);border:1px solid var(--border);border-radius:5px;padding:3px 9px;font-size:11px;color:var(--accent);font-weight:600;pointer-events:none;font-variant-numeric:tabular-nums}
+
+.props-panel{position:absolute;right:10px;top:10px;width:210px;background:rgba(23,23,42,.97);border:1px solid var(--border);border-radius:8px;padding:10px;display:none;z-index:10;backdrop-filter:blur(8px)}
+.props-panel.visible{display:block}
+.props-panel h4{font-size:11px;margin-bottom:7px;color:var(--accent);font-weight:600;letter-spacing:.3px}
+.prop-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:11px;color:var(--text-dim)}
+.prop-row input[type=range]{width:95px;accent-color:var(--accent)}
+.prop-input{width:100%;background:rgba(255,255,255,.07);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:4px;font-size:11px;margin-top:2px;outline:none;transition:.12s}
+.prop-input:focus{border-color:var(--accent)}
+
+.resize-handle{fill:var(--accent);stroke:#17172a;stroke-width:1.5;cursor:nwse-resize;pointer-events:all}
+.resize-handle:hover{fill:#ffd966}
+#fileInput{display:none}
+#projectInput{display:none}
+
+.coord-display{position:absolute;bottom:10px;left:14px;font-size:10px;color:var(--text-dim);font-variant-numeric:tabular-nums;pointer-events:none;font-family:'Courier New',monospace}
+.status-display{position:absolute;bottom:31px;left:14px;background:rgba(23,23,42,.84);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:11px;color:var(--text);pointer-events:none;backdrop-filter:blur(8px);box-shadow:var(--shadow)}
+.toast{position:absolute;left:50%;bottom:18px;transform:translate(-50%,10px);background:rgba(17,17,31,.96);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:7px;color:var(--text);padding:8px 12px;font-size:12px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.18s;z-index:30;max-width:min(520px,calc(100% - 40px));text-align:center}
+.toast.visible{opacity:1;transform:translate(-50%,0)}
+.toast.success{border-left-color:var(--success)}
+.toast.error{border-left-color:var(--danger)}
+
+/* Images only selectable in select mode */
+#imageGroup image{pointer-events:none}
+#imageGroup image.selectable{pointer-events:all}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="sidebar">
+  <div class="sidebar-header">⚔ КОНСТРУКТОР ОПЕРАЦИЙ</div>
+  <div class="sidebar-scroll">
+
+    <div class="sec-title">Карта</div>
+    <button class="act-btn" onclick="document.getElementById('fileInput').click()"><span class="icon">📁</span> Загрузить изображение</button>
+    <button class="act-btn" onclick="pasteFromClipboard()"><span class="icon">📋</span> Вставить из буфера</button>
+    <div class="divider"></div>
+    <button class="act-btn" onclick="saveProject()"><span class="icon">💾</span> Сохранить проект</button>
+    <button class="act-btn" onclick="document.getElementById('projectInput').click()"><span class="icon">📂</span> Загрузить проект</button>
+
+    <div class="sec-title">Инструменты</div>
+    <button class="act-btn tool-btn" data-tool="marker"          onclick="setTool('marker')"><span class="icon">🖍</span> Маркер</button>
+    <button class="act-btn tool-btn" data-tool="flex-arrow"      onclick="setTool('flex-arrow')"><span class="icon">⟶</span> Гибкая стрелка</button>
+    <button class="act-btn tool-btn" data-tool="flex-arrow-dash" onclick="setTool('flex-arrow-dash')"><span class="icon">⤏</span> Штриховая стрелка</button>
+    <button class="act-btn tool-btn" data-tool="wide-arrow"      onclick="setTool('wide-arrow')"><span class="icon">➤</span> Широкая стрелка</button>
+    <button class="act-btn tool-btn" data-tool="line"            onclick="setTool('line')"><span class="icon">━</span> Прямая линия</button>
+    <button class="act-btn tool-btn" data-tool="area"            onclick="setTool('area')"><span class="icon">▭</span> Зона / район</button>
+    <button class="act-btn tool-btn" data-tool="boundary"        onclick="setTool('boundary')"><span class="icon">▥</span> Рубеж / граница</button>
+    <button class="act-btn tool-btn" data-tool="measure"         onclick="setTool('measure')"><span class="icon">↔</span> Линейка</button>
+    <button class="act-btn tool-btn" data-tool="text"            onclick="setTool('text')"><span class="icon">T</span> Текстовая метка</button>
+
+    <div class="sec-title">Инженерные</div>
+    <button class="act-btn tool-btn" data-tool="mine"   onclick="setTool('mine')"><span class="icon">💣</span> Минное поле</button>
+    <button class="act-btn tool-btn" data-tool="trench" onclick="setTool('trench')"><span class="icon">〰</span> Траншея</button>
+
+    <div class="sec-title">Сухопутные (NATO)</div>
+    <div class="sym-grid">
+      <button class="sym-btn" data-symbol="tank"         onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><line x1="6" y1="8" x2="26" y2="8" stroke="#e04040" stroke-width="1"/><line x1="6" y1="16" x2="26" y2="16" stroke="#e04040" stroke-width="1"/><rect x="12" y="4" width="8" height="4" fill="none" stroke="#e04040" stroke-width="1" rx="1"/></svg>Tank</button>
+      <button class="sym-btn" data-symbol="armour"       onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><line x1="8" y1="6" x2="24" y2="18" stroke="#e04040" stroke-width="1.2"/><line x1="24" y1="6" x2="8" y2="18" stroke="#e04040" stroke-width="1.2"/></svg>Armour</button>
+      <button class="sym-btn" data-symbol="infantry"     onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><line x1="10" y1="6" x2="22" y2="18" stroke="#e04040" stroke-width="1.2"/><line x1="22" y1="6" x2="10" y2="18" stroke="#e04040" stroke-width="1.2"/></svg>Infantry</button>
+      <button class="sym-btn" data-symbol="motorized"    onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><circle cx="16" cy="12" r="6" fill="none" stroke="#e04040" stroke-width="1.2"/><circle cx="16" cy="12" r="2" fill="#e04040"/></svg>Motor.</button>
+      <button class="sym-btn" data-symbol="mech_inf"     onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><line x1="10" y1="6" x2="22" y2="18" stroke="#e04040" stroke-width="1.2"/><line x1="22" y1="6" x2="10" y2="18" stroke="#e04040" stroke-width="1.2"/><circle cx="16" cy="12" r="3" fill="none" stroke="#e04040" stroke-width="1"/></svg>Mech Inf</button>
+      <button class="sym-btn" data-symbol="arty"         onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><ellipse cx="16" cy="12" rx="13" ry="9" fill="none" stroke="#e04040" stroke-width="1.2"/><line x1="3" y1="12" x2="29" y2="12" stroke="#e04040" stroke-width="1.2"/></svg>Arty</button>
+      <button class="sym-btn" data-symbol="missile"      onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><ellipse cx="16" cy="12" rx="13" ry="9" fill="none" stroke="#e04040" stroke-width="1.2"/><line x1="3" y1="12" x2="29" y2="12" stroke="#e04040" stroke-width="1.2"/><line x1="16" y1="3" x2="16" y2="21" stroke="#e04040" stroke-width="1.2"/></svg>Missile</button>
+      <button class="sym-btn" data-symbol="hq"           onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><line x1="4" y1="4" x2="4" y2="20" stroke="#e04040" stroke-width="1"/><line x1="4" y1="4" x2="16" y2="4" stroke="#e04040" stroke-width="1"/><line x1="16" y1="4" x2="16" y2="10" stroke="#e04040" stroke-width="1"/></svg>HQ</button>
+      <button class="sym-btn" data-symbol="recon"        onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><circle cx="16" cy="12" r="6" fill="none" stroke="#e04040" stroke-width="1.2"/><circle cx="16" cy="12" r="2" fill="#e04040"/></svg>Recon</button>
+      <button class="sym-btn" data-symbol="atgm"         onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><line x1="8" y1="12" x2="24" y2="12" stroke="#e04040" stroke-width="1.5"/><polygon points="24,9 29,12 24,15" fill="#e04040"/></svg>ATGM</button>
+      <button class="sym-btn" data-symbol="sam"          onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><line x1="16" y1="6" x2="16" y2="18" stroke="#e04040" stroke-width="1.5"/><line x1="10" y1="12" x2="22" y2="12" stroke="#e04040" stroke-width="1.5"/></svg>SAM</button>
+      <button class="sym-btn" data-symbol="engineer"     onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><line x1="8" y1="8" x2="16" y2="16" stroke="#e04040" stroke-width="1.5"/><line x1="16" y1="8" x2="24" y2="16" stroke="#e04040" stroke-width="1.5"/><line x1="16" y1="16" x2="16" y2="20" stroke="#e04040" stroke-width="1.5"/></svg>Engineer</button>
+      <button class="sym-btn" data-symbol="medical"      onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><line x1="16" y1="6" x2="16" y2="18" stroke="#e04040" stroke-width="2"/><line x1="10" y1="12" x2="22" y2="12" stroke="#e04040" stroke-width="2"/></svg>Medical</button>
+      <button class="sym-btn" data-symbol="mortar"       onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><ellipse cx="16" cy="12" rx="13" ry="9" fill="none" stroke="#e04040" stroke-width="1.2"/><line x1="16" y1="3" x2="16" y2="21" stroke="#e04040" stroke-width="1.5"/><line x1="12" y1="12" x2="20" y2="12" stroke="#e04040" stroke-width="1.5"/></svg>Mortar</button>
+      <button class="sym-btn" data-symbol="support"      onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><circle cx="16" cy="12" r="5" fill="none" stroke="#e04040" stroke-width="1.2"/></svg>Support</button>
+      <button class="sym-btn" data-symbol="maint"        onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><polygon points="16,6 22,12 16,18 10,12" fill="none" stroke="#e04040" stroke-width="1.2"/></svg>Maint</button>
+      <button class="sym-btn" data-symbol="ew"           onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="2" y="2" width="28" height="20" fill="none" stroke="#e04040" stroke-width="1.2" rx="1"/><path d="M8 12 Q10 6 12 12 Q14 18 16 12 Q18 6 20 12 Q22 18 24 12" fill="none" stroke="#e04040" stroke-width="1.2"/></svg>EW</button>
+      <button class="sym-btn" data-symbol="uav"          onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><polygon points="16,3 26,12 16,21 6,12" fill="none" stroke="#e04040" stroke-width="1.2"/><circle cx="16" cy="12" r="3" fill="#e04040"/></svg>UAV</button>
+    </div>
+
+    <div class="sec-title">Прочее</div>
+    <div class="sym-grid">
+      <button class="sym-btn" data-symbol="contam"       onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><ellipse cx="16" cy="12" rx="13" ry="9" fill="#ffd966" stroke="#e04040" stroke-width="1.2" opacity=".5"/><text x="16" y="15" text-anchor="middle" font-size="10" fill="#e04040" font-weight="bold">G</text></svg>Contam</button>
+      <button class="sym-btn" data-symbol="installation" onclick="setTool('symbol',this)"><svg viewBox="0 0 32 24"><rect x="4" y="4" width="24" height="16" fill="none" stroke="#e04040" stroke-width="1.2"/><line x1="4" y1="12" x2="28" y2="12" stroke="#e04040" stroke-width="1"/><line x1="16" y1="4" x2="16" y2="20" stroke="#e04040" stroke-width="1"/></svg>Install</button>
+    </div>
+
+    <div class="sec-title">Цвет</div>
+    <div class="color-row">
+      <label>Союзник:</label><input type="color" id="colorFriendly" value="#e04040">
+      <label>Противник:</label><input type="color" id="colorEnemy" value="#4060e0">
+    </div>
+    <div class="force-toggle">
+      <button class="force-btn active" id="forceFriendlyBtn" onclick="setForceSide('friendly')">Союзник</button>
+      <button class="force-btn enemy" id="forceEnemyBtn" onclick="setForceSide('enemy')">Противник</button>
+    </div>
+    <div class="divider"></div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="export-row">
+      <span>Качество PNG</span>
+      <select id="exportScale">
+        <option value="1">1x</option>
+        <option value="2" selected>2x</option>
+        <option value="3">3x</option>
+        <option value="4">4x</option>
+      </select>
+    </div>
+    <button class="act-btn" onclick="undoAction()"><span class="icon">↩</span> Отменить (Ctrl+Z)</button>
+    <button class="act-btn" onclick="clearAll()"><span class="icon">🗑</span> Очистить всё</button>
+    <button class="act-btn" onclick="exportPNG()"><span class="icon">💾</span> Экспорт PNG</button>
+    <button class="act-btn" onclick="exportSVG()"><span class="icon">▣</span> Экспорт SVG</button>
+  </div>
+</div>
+
+<div class="canvas-area" id="canvasArea">
+  <svg id="mainSvg" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="gridPattern" width="50" height="50" patternUnits="userSpaceOnUse">
+        <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(255,255,255,.035)" stroke-width="1"/>
+      </pattern>
+      <pattern id="gridPatternLarge" width="200" height="200" patternUnits="userSpaceOnUse">
+        <path d="M 200 0 L 0 0 0 200" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <g id="viewport">
+      <rect x="-9999" y="-9999" width="19998" height="19998" fill="#191926"/>
+      <rect x="-9999" y="-9999" width="19998" height="19998" fill="url(#gridPattern)"/>
+      <rect x="-9999" y="-9999" width="19998" height="19998" fill="url(#gridPatternLarge)"/>
+      <g id="imageGroup"></g>
+      <g id="elementsGroup"></g>
+      <g id="selectionGroup"></g>
+    </g>
+    <g id="previewGroup"></g>
+  </svg>
+
+  <div class="topbar">
+    <button class="act-btn" id="topSelectBtn" onclick="setTool('select')"><span class="icon">🖱</span> Выбор</button>
+    <button class="act-btn" id="topPanBtn"    onclick="setTool('pan')"><span class="icon">✋</span> Перемещение</button>
+    <button class="act-btn"                   onclick="duplicateSelected()"><span class="icon">⧉</span> Дублировать</button>
+    <button class="act-btn"                   onclick="deleteSelected()"><span class="icon">🗑</span> Удалить</button>
+  </div>
+
+  <div class="zoom-wrap">
+    <button class="zoom-btn" onclick="zoomBy(1.3)">+</button>
+    <button class="zoom-btn" onclick="zoomBy(1/1.3)">−</button>
+    <button class="zoom-btn" onclick="zoomReset()">⟲</button>
+  </div>
+  <div class="zoom-lbl" id="zoomLbl">100%</div>
+  <div class="status-display" id="statusDisplay">Выбор · Союзник</div>
+  <div class="coord-display" id="coordDisplay">0, 0</div>
+  <div class="toast" id="toast"></div>
+
+  <div class="props-panel" id="propsPanel">
+    <h4 id="propsTitle">Свойства</h4>
+    <div class="prop-row"><span>Толщина</span><input type="range" id="propStroke" min="1" max="10" value="2"></div>
+    <div class="prop-row"><span>Прозрачность</span><input type="range" id="propOpacity" min="0.1" max="1" step="0.05" value="1"></div>
+    <div class="prop-row" id="scaleRow"><span>Масштаб</span><input type="range" id="propScale" min="25" max="200" value="100"></div>
+    <div class="prop-row"><span>Подпись</span></div>
+    <input class="prop-input" type="text" id="propLabel" placeholder="Введите подпись…">
+  </div>
+</div>
+</div>
+<input type="file" id="fileInput" accept="image/*" multiple>
+<input type="file" id="projectInput" accept=".json,application/json">
+
+<script>
+'use strict';
+
+const svg          = document.getElementById('mainSvg');
+const viewport     = document.getElementById('viewport');
+const elemGroup    = document.getElementById('elementsGroup');
+const previewGrp   = document.getElementById('previewGroup');
+const selGrp       = document.getElementById('selectionGroup');
+const imgGrp       = document.getElementById('imageGroup');
+const canvasArea   = document.getElementById('canvasArea');
+const propsPanel   = document.getElementById('propsPanel');
+const zoomLbl      = document.getElementById('zoomLbl');
+const coordDisplay = document.getElementById('coordDisplay');
+const statusDisplay= document.getElementById('statusDisplay');
+const toastEl      = document.getElementById('toast');
+
+function NS(tag){ return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+function clamp(v,lo,hi){ return Math.max(lo, Math.min(hi, v)); }
+function finiteNumber(v,fallback){ const n=Number(v); return Number.isFinite(n)?n:fallback; }
+function getSvgPt(e){ const r=canvasArea.getBoundingClientRect(); return {x:(e.clientX-r.left-panX)/zoom, y:(e.clientY-r.top-panY)/zoom}; }
+function toScreen(p){ return {x:p.x*zoom+panX, y:p.y*zoom+panY}; }
+function getColor(){ return document.getElementById(activeForce==='enemy'?'colorEnemy':'colorFriendly').value; }
+function getForceName(){ return activeForce==='enemy'?'Противник':'Союзник'; }
+function toolName(tool){
+  const names={select:'Выбор',pan:'Перемещение',marker:'Маркер','flex-arrow':'Гибкая стрелка','flex-arrow-dash':'Штриховая стрелка','wide-arrow':'Широкая стрелка',line:'Линия',area:'Зона',boundary:'Рубеж',measure:'Линейка',text:'Текст',mine:'Минное поле',trench:'Траншея',symbol:'Символ'};
+  return names[tool]||tool;
+}
+function updateStatus(){
+  statusDisplay.textContent=`${toolName(currentTool)} · ${getForceName()} · ${elements.length} эл. · ${images.length} карт.`;
+}
+let toastTimer=null;
+function showToast(text,type){
+  if(!toastEl) return;
+  clearTimeout(toastTimer);
+  toastEl.textContent=text;
+  toastEl.className='toast visible'+(type?' '+type:'');
+  toastTimer=setTimeout(()=>{ toastEl.className='toast'; },2600);
+}
+function downloadBlob(blob,filename){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),500);
+}
+function safeStamp(){
+  return new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+}
+
+// Catmull-Rom → Bezier
+function smoothPath(pts){
+  if(!pts||pts.length<2) return '';
+  if(pts.length===2) return `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}L${pts[1].x.toFixed(1)},${pts[1].y.toFixed(1)}`;
+  let d=`M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)}`;
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(pts.length-1,i+2)];
+    const cp1x=p1.x+(p2.x-p0.x)/6, cp1y=p1.y+(p2.y-p0.y)/6;
+    const cp2x=p2.x-(p3.x-p1.x)/6, cp2y=p2.y-(p3.y-p1.y)/6;
+    d+=`C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+// Ramer-Douglas-Peucker
+function simplify(pts,eps){
+  eps=eps||1.5;
+  if(pts.length<=2) return pts.slice();
+  let maxD=0,maxI=0;
+  for(let i=1;i<pts.length-1;i++){
+    const d=ptLineDist(pts[i],pts[0],pts[pts.length-1]);
+    if(d>maxD){maxD=d;maxI=i;}
+  }
+  if(maxD>eps){
+    const l=simplify(pts.slice(0,maxI+1),eps);
+    const r=simplify(pts.slice(maxI),eps);
+    return [...l.slice(0,-1),...r];
+  }
+  return [pts[0],pts[pts.length-1]];
+}
+
+function ptLineDist(p,a,b){
+  const dx=b.x-a.x,dy=b.y-a.y,len2=dx*dx+dy*dy;
+  if(!len2) return dist(p,a);
+  const t=clamp(((p.x-a.x)*dx+(p.y-a.y)*dy)/len2,0,1);
+  return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────
+let currentTool='select', currentSymbol=null, activeForce='friendly';
+let elements=[], selectedIds=new Set(), history=[], nextId=1;
+let panX=0, panY=0, zoom=1;
+let isPanning=false, panStartX=0, panStartY=0;
+let isDrawing=false, drawPts=[], lastAddedPt=null;
+let dragState=null, resizeState=null, rubberState=null;
+let symPreview=null;
+let images=[], imgNextId=1, selectedImgId=null, imgDrag=null;
+const zoomResponsiveTypes=new Set(['flex-arrow','flex-arrow-dash','mine','trench','boundary','measure','text']);
+let lastDecorZoom=null;
+let uidSeq=1;
+
+// ─── WIDE ARROW CORE ─────────────────────────────────────────────────────
+function computeWideArrow(pts) {
+  if (!pts || pts.length < 2) return null;
+  const arc = [0];
+  for (let i = 1; i < pts.length; i++) arc.push(arc[i-1] + dist(pts[i-1], pts[i]));
+  const L = arc[arc.length - 1];
+  if (L < 4) return null;
+  const minW  = Math.max(2, L * 0.022);
+  const maxW  = L * 0.13;
+  const tipHW = maxW * 1.75;
+  const tipL  = maxW * 1.55;
+  function tanAt(i) {
+    let dx, dy;
+    if (pts.length === 2) { dx = pts[1].x-pts[0].x; dy = pts[1].y-pts[0].y; }
+    else if (i === 0)               { dx = pts[1].x-pts[0].x;   dy = pts[1].y-pts[0].y; }
+    else if (i === pts.length - 1)  { dx = pts[i].x-pts[i-1].x; dy = pts[i].y-pts[i-1].y; }
+    else                            { dx = pts[i+1].x-pts[i-1].x; dy = pts[i+1].y-pts[i-1].y; }
+    const l = Math.hypot(dx,dy)||1;
+    return {x:dx/l, y:dy/l};
+  }
+  const lPts=[], rPts=[];
+  for (let i = 0; i < pts.length; i++) {
+    const t   = arc[i] / L;
+    const w   = minW + (maxW - minW) * (t * t);
+    const tan = tanAt(i);
+    const nx  = -tan.y, ny = tan.x;
+    lPts.push({x: pts[i].x + nx*w, y: pts[i].y + ny*w});
+    rPts.push({x: pts[i].x - nx*w, y: pts[i].y - ny*w});
+  }
+  const lastTan = tanAt(pts.length - 1);
+  const lp      = pts[pts.length - 1];
+  const tipPt   = {x: lp.x + lastTan.x*tipL,  y: lp.y + lastTan.y*tipL};
+  const tnx     = -lastTan.y, tny = lastTan.x;
+  const tipL2   = {x: lp.x + tnx*tipHW, y: lp.y + tny*tipHW};
+  const tipR2   = {x: lp.x - tnx*tipHW, y: lp.y - tny*tipHW};
+  const leftD  = smoothPath(lPts);
+  const rRev   = rPts.slice().reverse();
+  let d = leftD;
+  d += `L${tipL2.x.toFixed(1)},${tipL2.y.toFixed(1)}`;
+  d += `L${tipPt.x.toFixed(1)},${tipPt.y.toFixed(1)}`;
+  d += `L${tipR2.x.toFixed(1)},${tipR2.y.toFixed(1)}`;
+  for (let i = 0; i < rRev.length; i++) {
+    const arr = rRev;
+    if (i === 0) { d += `L${arr[0].x.toFixed(1)},${arr[0].y.toFixed(1)}`; continue; }
+    const p0 = arr[Math.max(0,i-2)], p1=arr[i-1], p2=arr[i], p3=arr[Math.min(arr.length-1,i+1)];
+    const cp1x=p1.x+(p2.x-p0.x)/6, cp1y=p1.y+(p2.y-p0.y)/6;
+    const cp2x=p2.x-(p3.x-p1.x)/6, cp2y=p2.y-(p3.y-p1.y)/6;
+    d += `C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+  }
+  d += 'Z';
+  const all = [...lPts,...rPts,tipL2,tipR2,tipPt];
+  const xs = all.map(p=>p.x), ys = all.map(p=>p.y);
+  return { d, bbox: {x:Math.min(...xs), y:Math.min(...ys), w:Math.max(...xs)-Math.min(...xs), h:Math.max(...ys)-Math.min(...ys)} };
+}
+
+function buildWideArrow(pts, color) {
+  const g = NS('g');
+  g.dataset.label = '';
+  g.classList.add('wide-arrow-el');
+  const shape = computeWideArrow(pts);
+  if (!shape) return g;
+  g.dataset.waShape = shape.d;
+  g.dataset.waColor = (color||'').toLowerCase();
+  const uid = 'wa_' + (uidSeq++) + '_' + (Date.now() % 99999);
+  const defs = NS('defs');
+  const pat = NS('pattern');
+  pat.id = 'hp_' + uid;
+  pat.setAttribute('patternUnits', 'userSpaceOnUse');
+  const ps = 9;
+  pat.setAttribute('width',  ps);
+  pat.setAttribute('height', ps);
+  pat.setAttribute('patternTransform', 'rotate(-45 0 0)');
+  const hl = NS('line');
+  hl.setAttribute('x1','0'); hl.setAttribute('y1','0');
+  hl.setAttribute('x2','0'); hl.setAttribute('y2', ps);
+  hl.setAttribute('stroke', color);
+  hl.setAttribute('stroke-width', '1.7');
+  hl.setAttribute('stroke-opacity', '0.42');
+  pat.appendChild(hl);
+  defs.appendChild(pat);
+  const clip = NS('clipPath');
+  clip.id = 'cp_' + uid;
+  const clipPth = NS('path');
+  clipPth.setAttribute('d', shape.d);
+  clip.appendChild(clipPth);
+  defs.appendChild(clip);
+  g.appendChild(defs);
+  const body = NS('path');
+  body.classList.add('wide-arrow-body');
+  body.setAttribute('d', shape.d);
+  body.setAttribute('fill', color);
+  body.setAttribute('fill-opacity', '0.14');
+  body.setAttribute('stroke', 'none');
+  body.style.cursor = 'move';
+  g.appendChild(body);
+  const bb = shape.bbox;
+  const hr = NS('rect');
+  hr.classList.add('wide-arrow-hatch');
+  hr.setAttribute('x',      bb.x - 2);
+  hr.setAttribute('y',      bb.y - 2);
+  hr.setAttribute('width',  bb.w + 4);
+  hr.setAttribute('height', bb.h + 4);
+  hr.setAttribute('fill',   `url(#hp_${uid})`);
+  hr.setAttribute('clip-path', `url(#cp_${uid})`);
+  hr.style.pointerEvents = 'none';
+  g.appendChild(hr);
+  const outline = NS('path');
+  outline.classList.add('wide-arrow-outline');
+  outline.setAttribute('d', shape.d);
+  outline.setAttribute('fill', 'none');
+  outline.setAttribute('stroke', color);
+  outline.setAttribute('stroke-width', '3');
+  outline.setAttribute('stroke-linejoin', 'round');
+  outline.setAttribute('stroke-linecap', 'round');
+  outline.setAttribute('vector-effect', 'non-scaling-stroke');
+  outline.style.cursor = 'move';
+  g.appendChild(outline);
+  return g;
+}
+
+function wideArrowColor(color){ return (color||'').trim().toLowerCase(); }
+function wideArrowBox(shape){
+  if(!shape||!shape.bbox) return null;
+  return {x:shape.bbox.x,y:shape.bbox.y,width:shape.bbox.w,height:shape.bbox.h};
+}
+function expandBox(box,pad){
+  return {x:box.x-pad,y:box.y-pad,width:box.width+pad*2,height:box.height+pad*2};
+}
+function boxesOverlap(a,b,pad){
+  if(!a||!b) return false;
+  return a.x-pad<=b.x+b.width && a.x+a.width+pad>=b.x && a.y-pad<=b.y+b.height && a.y+a.height+pad>=b.y;
+}
+function ensureWideArrowMergeDefs(){
+  let defs=document.getElementById('wideArrowMergeDefs');
+  if(defs) return defs;
+  let rootDefs=svg.querySelector('defs');
+  if(!rootDefs){ rootDefs=NS('defs'); svg.insertBefore(rootDefs,svg.firstChild); }
+  defs=NS('defs'); defs.id='wideArrowMergeDefs'; rootDefs.appendChild(defs);
+  return defs;
+}
+function updateWideArrowMerges(){
+  const mergeDefs=ensureWideArrowMergeDefs();
+  mergeDefs.innerHTML='';
+  const arrows=elements.filter(el=>el.type==='wide-arrow').map((el,order)=>{
+    const shape=computeWideArrow(el.data.points);
+    return {
+      id:el.id,
+      order,
+      color:wideArrowColor(el.data.color),
+      shape,
+      box:wideArrowBox(shape),
+      body:el.el.querySelector('.wide-arrow-body'),
+      hatch:el.el.querySelector('.wide-arrow-hatch'),
+      outline:el.el.querySelector('.wide-arrow-outline')
+    };
+  }).filter(a=>a.shape&&a.box&&a.outline);
+  arrows.forEach(a=>{
+    a.outline.removeAttribute('mask');
+    if(a.body) a.body.removeAttribute('mask');
+    if(a.hatch) a.hatch.removeAttribute('mask');
+  });
+  if(arrows.length<2) return;
+  const makeMask=(maskId,box,blockers,strokePad)=>{
+    const mask=NS('mask');
+    mask.id=maskId;
+    mask.setAttribute('maskUnits','userSpaceOnUse');
+    mask.setAttribute('maskContentUnits','userSpaceOnUse');
+    mask.setAttribute('x',box.x);
+    mask.setAttribute('y',box.y);
+    mask.setAttribute('width',box.width);
+    mask.setAttribute('height',box.height);
+    const white=NS('rect');
+    white.setAttribute('x',box.x);
+    white.setAttribute('y',box.y);
+    white.setAttribute('width',box.width);
+    white.setAttribute('height',box.height);
+    white.setAttribute('fill','#fff');
+    mask.appendChild(white);
+    blockers.forEach(b=>{
+      const cut=NS('path');
+      cut.setAttribute('d',b.shape.d);
+      cut.setAttribute('fill','#000');
+      cut.setAttribute('stroke','#000');
+      cut.setAttribute('stroke-width',strokePad);
+      cut.setAttribute('stroke-linejoin','round');
+      cut.setAttribute('stroke-linecap','round');
+      mask.appendChild(cut);
+    });
+    mergeDefs.appendChild(mask);
+    return maskId;
+  };
+  const pad=Math.max(8/zoom,2);
+  arrows.forEach(a=>{
+    const blockers=arrows.filter(b=>b.id!==a.id && b.color===a.color && boxesOverlap(a.box,b.box,pad));
+    const box=expandBox(a.box,Math.max(40/zoom,12));
+    if(blockers.length){
+      const maskId=makeMask(`wa_merge_outline_${a.id}`,box,blockers,Math.max(10/zoom,2));
+      a.outline.setAttribute('mask',`url(#${maskId})`);
+    }
+    const paintBlockers=blockers.filter(b=>b.order<a.order);
+    if(paintBlockers.length){
+      const maskId=makeMask(`wa_merge_paint_${a.id}`,box,paintBlockers,Math.max(3/zoom,1));
+      if(a.body) a.body.setAttribute('mask',`url(#${maskId})`);
+      if(a.hatch) a.hatch.setAttribute('mask',`url(#${maskId})`);
+    }
+  });
+}
+
+function previewWideArrow(pts, color) {
+  clearPreview();
+  if (pts.length < 2) return;
+  const simple = simplify(pts, 0.5 / zoom);
+  const shape  = computeWideArrow(simple);
+  if (!shape) return;
+  const g = NS('g');
+  g.setAttribute('transform', `translate(${panX},${panY}) scale(${zoom})`);
+  g.setAttribute('opacity', '0.62');
+  const fill = NS('path');
+  fill.setAttribute('d', shape.d);
+  fill.setAttribute('fill', color);
+  fill.setAttribute('fill-opacity', '0.18');
+  fill.setAttribute('stroke', 'none');
+  g.appendChild(fill);
+  const hatchG = NS('g');
+  hatchG.setAttribute('clip-path', 'none');
+  const bb = shape.bbox;
+  const step = Math.max(4, (bb.w + bb.h) / 18);
+  const angle = -Math.PI / 4;
+  const cos45 = Math.cos(angle), sin45 = Math.sin(angle);
+  const diagLen = Math.hypot(bb.w, bb.h) * 1.5;
+  for (let offset = -(bb.w + bb.h) * 0.5; offset < (bb.w + bb.h) * 1.5; offset += step) {
+    const cx2 = bb.x + bb.w * 0.5 + offset;
+    const cy2 = bb.y + bb.h * 0.5;
+    const x1 = cx2 - cos45 * diagLen * 0.5, y1 = cy2 - sin45 * diagLen * 0.5;
+    const x2 = cx2 + cos45 * diagLen * 0.5, y2 = cy2 + sin45 * diagLen * 0.5;
+    const ln = NS('line');
+    ln.setAttribute('x1', x1.toFixed(1)); ln.setAttribute('y1', y1.toFixed(1));
+    ln.setAttribute('x2', x2.toFixed(1)); ln.setAttribute('y2', y2.toFixed(1));
+    ln.setAttribute('stroke', color);
+    ln.setAttribute('stroke-width', 1.5 / zoom);
+    ln.setAttribute('stroke-opacity', '0.45');
+    ln.style.pointerEvents = 'none';
+    hatchG.appendChild(ln);
+  }
+  const previewDefs = NS('defs');
+  const previewClip = NS('clipPath');
+  previewClip.id = 'preview_clip_wa';
+  const previewClipPth = NS('path');
+  previewClipPth.setAttribute('d', shape.d);
+  previewClip.appendChild(previewClipPth);
+  previewDefs.appendChild(previewClip);
+  g.appendChild(previewDefs);
+  hatchG.setAttribute('clip-path', 'url(#preview_clip_wa)');
+  g.appendChild(hatchG);
+  const outline = NS('path');
+  outline.setAttribute('d', shape.d);
+  outline.setAttribute('fill', 'none');
+  outline.setAttribute('stroke', color);
+  outline.setAttribute('stroke-width', 2.5 / zoom);
+  outline.setAttribute('stroke-linejoin', 'round');
+  g.appendChild(outline);
+  previewGrp.appendChild(g);
+}
+
+// ─── VIEWPORT ────────────────────────────────────────────────────────────
+function updateTransform(){
+  viewport.setAttribute('transform', `translate(${panX},${panY}) scale(${zoom})`);
+  zoomLbl.textContent = Math.round(zoom*100)+'%';
+  const zoomChanged=lastDecorZoom!==zoom;
+  if(zoomChanged){
+    elements.forEach(el=>{
+      if(el.type==='symbol')
+        el.el.setAttribute('transform',`translate(${el.data.x},${el.data.y}) scale(${(el.data.scale||1)/zoom})`);
+      if(zoomResponsiveTypes.has(el.type)) rebuildEl(el);
+      else updateLabel(el);
+    });
+    updateWideArrowMerges();
+    lastDecorZoom=zoom;
+  }
+  images.forEach(im=>{ im.el.setAttribute('x',im.cx-im.w/2); im.el.setAttribute('y',im.cy-im.h/2); });
+  if(zoomChanged&&selectedIds.size) drawSelBox();
+  if(zoomChanged&&selectedImgId) showImageBorder();
+  updateStatus();
+}
+
+function zoomBy(f){
+  const r=canvasArea.getBoundingClientRect();
+  panX=(r.width/2)-(r.width/2-panX)*f; panY=(r.height/2)-(r.height/2-panY)*f;
+  zoom=clamp(zoom*f,0.04,24); updateTransform();
+  if(currentTool==='symbol') refreshSymPreviewPos();
+}
+function zoomReset(){ zoom=1; panX=0; panY=0; updateTransform(); }
+
+// ─── SYMBOL DEFINITIONS ──────────────────────────────────────────────────
+function symSVG(sym,color){
+  const s=14,sw=1.2;
+  const rect=`<rect x="${-s}" y="${-s*.75}" width="${s*2}" height="${s*1.5}" fill="none" stroke="${color}" stroke-width="${sw}" rx="1"/>`;
+  const ell=`<ellipse cx="0" cy="0" rx="${s*.9}" ry="${s*.65}" fill="none" stroke="${color}" stroke-width="${sw}"/>`;
+  const cx=(ax,ay,bx,by)=>`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="${color}" stroke-width="${sw}"/>`;
+  switch(sym){
+    case 'tank': return rect+cx(-s+2,-s*.25,s-2,-s*.25)+cx(-s+2,s*.25,s-2,s*.25)+`<rect x="${-s*.3}" y="${-s*.75}" width="${s*.6}" height="${s*.3}" fill="none" stroke="${color}" stroke-width="${sw}" rx="1"/>`;
+    case 'armour': return rect+cx(-s*.5,-s*.5,s*.5,s*.5)+cx(s*.5,-s*.5,-s*.5,s*.5);
+    case 'infantry': return rect+cx(-s*.35,-s*.5,s*.35,s*.5)+cx(s*.35,-s*.5,-s*.35,s*.5);
+    case 'motorized': return rect+`<circle cx="0" cy="0" r="${s*.45}" fill="none" stroke="${color}" stroke-width="${sw}"/><circle cx="0" cy="0" r="${s*.15}" fill="${color}"/>`;
+    case 'mech_inf': return rect+cx(-s*.35,-s*.5,s*.35,s*.5)+cx(s*.35,-s*.5,-s*.35,s*.5)+`<circle cx="0" cy="0" r="${s*.22}" fill="none" stroke="${color}" stroke-width="${sw}"/>`;
+    case 'arty': return ell+cx(-s*.9,0,s*.9,0);
+    case 'missile': return ell+cx(-s*.9,0,s*.9,0)+cx(0,-s*.65,0,s*.65);
+    case 'hq': return rect+cx(-s+2,-s*.75,-s+2,s*.75)+cx(-s+2,-s*.75,s*.2,-s*.75)+cx(s*.2,-s*.75,s*.2,s*.1);
+    case 'recon': return rect+`<circle cx="0" cy="0" r="${s*.45}" fill="none" stroke="${color}" stroke-width="${sw}"/><circle cx="0" cy="0" r="${s*.15}" fill="${color}"/>`;
+    case 'atgm': return rect+cx(-s*.5,0,s*.6,0)+`<polygon points="${s*.6},${-s*.25} ${s*.9},0 ${s*.6},${s*.25}" fill="${color}"/>`;
+    case 'sam': return rect+cx(0,-s*.55,0,s*.55)+cx(-s*.4,0,s*.4,0);
+    case 'engineer': return rect+cx(-s*.4,-s*.35,s*.4,s*.35)+cx(s*.4,-s*.35,-s*.4,s*.35)+cx(0,s*.35,0,s*.65);
+    case 'medical': return rect+`<line x1="0" y1="${-s*.5}" x2="0" y2="${s*.5}" stroke="${color}" stroke-width="${sw+.8}"/><line x1="${-s*.45}" y1="0" x2="${s*.45}" y2="0" stroke="${color}" stroke-width="${sw+.8}"/>`;
+    case 'mortar': return ell+cx(0,-s*.65,0,s*.65)+cx(-s*.3,0,s*.3,0);
+    case 'support': return rect+`<circle cx="0" cy="0" r="${s*.35}" fill="none" stroke="${color}" stroke-width="${sw}"/>`;
+    case 'maint': return rect+`<polygon points="0,${-s*.5} ${s*.45},0 0,${s*.5} ${-s*.45},0" fill="none" stroke="${color}" stroke-width="${sw}"/>`;
+    case 'ew': return rect+`<path d="M${-s*.5} 0 Q${-s*.35},${-s*.4} ${-s*.2} 0 Q${-s*.05},${s*.4} 0 0 Q${s*.05},${-s*.4} ${s*.2} 0 Q${s*.35},${s*.4} ${s*.5} 0" fill="none" stroke="${color}" stroke-width="${sw}"/>`;
+    case 'uav': return `<polygon points="0,${-s*.65} ${s*.85},0 0,${s*.65} ${-s*.85},0" fill="none" stroke="${color}" stroke-width="${sw}"/><circle cx="0" cy="0" r="${s*.22}" fill="${color}"/>`;
+    case 'contam': return `<ellipse cx="0" cy="0" rx="${s*.9}" ry="${s*.65}" fill="${color}" fill-opacity=".2" stroke="${color}" stroke-width="${sw}"/><text x="0" y="${s*.12}" text-anchor="middle" font-size="${s*.85}" fill="${color}" font-weight="bold">G</text>`;
+    case 'installation': return `<rect x="${-s*.85}" y="${-s*.6}" width="${s*1.7}" height="${s*1.2}" fill="none" stroke="${color}" stroke-width="${sw}"/>` +cx(-s*.85,0,s*.85,0)+cx(0,-s*.6,0,s*.6);
+    default: return `<circle cx="0" cy="0" r="${s}" fill="none" stroke="${color}" stroke-width="${sw}"/>`;
+  }
+}
+
+// ─── SYMBOL PREVIEW ──────────────────────────────────────────────────────
+function createSymPreview(){
+  removeSymPreview();
+  if(!currentSymbol) return;
+  symPreview=NS('g'); symPreview.setAttribute('opacity','0.55'); symPreview.setAttribute('pointer-events','none');
+  symPreview.innerHTML=symSVG(currentSymbol,getColor()); previewGrp.appendChild(symPreview);
+}
+function refreshSymPreviewPos(worldPt){
+  if(!symPreview) return;
+  const pt=worldPt||lastWorldMouse; if(!pt) return;
+  const sp=toScreen(pt); symPreview.setAttribute('transform',`translate(${sp.x},${sp.y})`);
+}
+function removeSymPreview(){ if(symPreview){symPreview.remove();symPreview=null;} }
+
+// ─── IMAGE MANAGEMENT ────────────────────────────────────────────────────
+function updateImageInteractivity(){
+  images.forEach(im=>im.el.classList.toggle('selectable',currentTool==='select'));
+}
+
+function attachImageEvents(svgImg,obj){
+  svgImg.classList.add('map-image');
+  svgImg.addEventListener('mousedown',e=>{
+    if(currentTool!=='select'||e.button!==0) return;
+    e.stopPropagation();
+    clearSelection();
+    selectImage(obj.id);
+    saveHistory();
+    const p=getSvgPt(e); imgDrag={obj,ox:obj.cx,oy:obj.cy,sx:p.x,sy:p.y};
+  });
+}
+
+function addImage(dataUrl,cx,cy){
+  const img=new Image();
+  img.onload=()=>{
+    const svgImg=NS('image'); svgImg.setAttribute('href',dataUrl);
+    const w=img.naturalWidth, h=img.naturalHeight;
+    svgImg.setAttribute('width',w); svgImg.setAttribute('height',h);
+    svgImg.setAttribute('x',cx-w/2); svgImg.setAttribute('y',cy-h/2);
+    svgImg.setAttribute('preserveAspectRatio','none');
+    const obj={id:imgNextId++,origW:w,origH:h,cx,cy,w,h,el:svgImg,dataUrl};
+    saveHistory();
+    images.push(obj); imgGrp.appendChild(svgImg);
+    attachImageEvents(svgImg,obj);
+    updateImageInteractivity();
+    updateStatus();
+    showToast('Изображение добавлено','success');
+  };
+  img.src=dataUrl;
+}
+
+function selectImage(id){
+  selectedImgId=id; showImageBorder(); showProps();
+  updateImageInteractivity();
+}
+function deselectImages(){
+  selectedImgId=null; removeImageBorder(); propsPanel.classList.remove('visible');
+  updateImageInteractivity();
+}
+
+function showImageBorder(){
+  removeImageBorder();
+  const im=images.find(i=>i.id===selectedImgId); if(!im) return;
+  const b=NS('rect');
+  b.setAttribute('x',im.cx-im.w/2); b.setAttribute('y',im.cy-im.h/2);
+  b.setAttribute('width',im.w); b.setAttribute('height',im.h);
+  b.setAttribute('fill','none'); b.setAttribute('stroke','var(--accent)');
+  b.setAttribute('stroke-width',1/zoom); b.setAttribute('stroke-dasharray',`${5/zoom},${3/zoom}`);
+  b.setAttribute('pointer-events','none'); b.id='imgBorder';
+  imgGrp.appendChild(b);
+  [{x:im.cx-im.w/2,y:im.cy-im.h/2},{x:im.cx+im.w/2,y:im.cy-im.h/2},
+   {x:im.cx-im.w/2,y:im.cy+im.h/2},{x:im.cx+im.w/2,y:im.cy+im.h/2}].forEach((corner,ci)=>{
+    const r=NS('rect'), hs=6/zoom;
+    r.setAttribute('x',corner.x-hs); r.setAttribute('y',corner.y-hs);
+    r.setAttribute('width',hs*2); r.setAttribute('height',hs*2);
+    r.setAttribute('class','resize-handle');
+    r.dataset.corner=['nw','ne','sw','se'][ci]; r.dataset.imgId=im.id;
+    selGrp.appendChild(r);
+  });
+}
+function removeImageBorder(){
+  const old=document.getElementById('imgBorder'); if(old) old.remove();
+  Array.from(selGrp.querySelectorAll('.resize-handle[data-img-id]')).forEach(h=>h.remove());
+}
+
+function pasteFromClipboard(){
+  if(navigator.clipboard&&navigator.clipboard.read){
+    navigator.clipboard.read().then(items=>{
+      for(const item of items) for(const type of item.types) if(type.startsWith('image/')){
+        item.getType(type).then(blob=>{
+          const r=new FileReader(); r.onload=ev=>addImage(ev.target.result,-panX/zoom,-panY/zoom); r.readAsDataURL(blob);
+        });
+      }
+    }).catch(()=>showToast('Нажмите Ctrl+V на холсте','error'));
+  }
+}
+canvasArea.addEventListener('paste',e=>{
+  e.preventDefault();
+  for(const item of (e.clipboardData||window.clipboardData).items)
+    if(item.type.indexOf('image')!==-1){ const r=new FileReader(); r.onload=ev=>addImage(ev.target.result,-panX/zoom,-panY/zoom); r.readAsDataURL(item.getAsFile()); break; }
+});
+document.getElementById('fileInput').addEventListener('change',function(){
+  for(const file of this.files) if(file.type.startsWith('image/')){ const r=new FileReader(); r.onload=ev=>addImage(ev.target.result,-panX/zoom,-panY/zoom); r.readAsDataURL(file); }
+  this.value='';
+});
+canvasArea.addEventListener('dragover',e=>e.preventDefault());
+canvasArea.addEventListener('drop',e=>{ e.preventDefault(); for(const file of e.dataTransfer.files) if(file.type.startsWith('image/')){ const rr=canvasArea.getBoundingClientRect(),cx=(e.clientX-rr.left-panX)/zoom,cy=(e.clientY-rr.top-panY)/zoom; const r=new FileReader(); r.onload=ev=>addImage(ev.target.result,cx,cy); r.readAsDataURL(file); } });
+
+// ─── SAVE/LOAD PROJECT ───────────────────────────────────────────────────
+function cloneData(v){ return JSON.parse(JSON.stringify(v)); }
+
+function serializeProject(){
+  return {
+    app: 'combat-operations-constructor',
+    version: 2,
+    timestamp: new Date().toISOString(),
+    settings: {
+      panX, panY, zoom, activeForce,
+      exportScale: document.getElementById('exportScale').value,
+      colorFriendly: document.getElementById('colorFriendly').value,
+      colorEnemy: document.getElementById('colorEnemy').value
+    },
+    elements: elements.map(el => ({
+      id: el.id,
+      type: el.type,
+      data: cloneData(el.data),
+      label: el.el.dataset.label || ''
+    })),
+    images: images.map(im => ({
+      id: im.id,
+      dataUrl: im.dataUrl,
+      cx: im.cx,
+      cy: im.cy,
+      w: im.w,
+      h: im.h,
+      origW: im.origW,
+      origH: im.origH
+    })),
+    nextId,
+    imgNextId
+  };
+}
+
+function saveProject(){
+  const project=serializeProject();
+  const blob=new Blob([JSON.stringify(project,null,2)],{type:'application/json;charset=utf-8'});
+  downloadBlob(blob,`combat_plan_${safeStamp()}.json`);
+  showToast(`Проект сохранен: ${project.elements.length} элементов, ${project.images.length} карт`,'success');
+}
+
+function restoreImage(imData){
+  if(!imData||!imData.dataUrl) return null;
+  const svgImg=NS('image');
+  const w=finiteNumber(imData.w||imData.origW,800), h=finiteNumber(imData.h||imData.origH,600);
+  const cx=finiteNumber(imData.cx,0), cy=finiteNumber(imData.cy,0);
+  svgImg.setAttribute('href',imData.dataUrl);
+  svgImg.setAttribute('width',w); svgImg.setAttribute('height',h);
+  svgImg.setAttribute('x',cx-w/2); svgImg.setAttribute('y',cy-h/2);
+  svgImg.setAttribute('preserveAspectRatio','none');
+  const rawId=Number(imData.id);
+  const id=Number.isFinite(rawId)&&rawId>0?rawId:imgNextId++;
+  const obj={id,origW:finiteNumber(imData.origW,w),origH:finiteNumber(imData.origH,h),cx,cy,w,h,el:svgImg,dataUrl:imData.dataUrl};
+  images.push(obj); imgGrp.appendChild(svgImg); attachImageEvents(svgImg,obj);
+  return obj;
+}
+
+function applyProject(project){
+  if(!project||typeof project!=='object') throw new Error('Файл не похож на проект');
+  const loadedElements=Array.isArray(project.elements)?project.elements:[];
+  const loadedImages=Array.isArray(project.images)?project.images:[];
+
+  elemGroup.innerHTML=''; imgGrp.innerHTML=''; selGrp.innerHTML=''; previewGrp.innerHTML='';
+  elements=[]; images=[]; selectedIds.clear(); selectedImgId=null; imgDrag=null; dragState=null; resizeState=null; history=[];
+
+  const s=project.settings||{};
+  panX=finiteNumber(s.panX,0); panY=finiteNumber(s.panY,0); zoom=clamp(finiteNumber(s.zoom,1),0.04,24);
+  if(s.colorFriendly) document.getElementById('colorFriendly').value=s.colorFriendly;
+  if(s.colorEnemy) document.getElementById('colorEnemy').value=s.colorEnemy;
+  const savedExportScale=Number(s.exportScale);
+  if(Number.isFinite(savedExportScale)) document.getElementById('exportScale').value=String(clamp(savedExportScale,1,4));
+  activeForce=s.activeForce==='enemy'?'enemy':'friendly';
+
+  loadedImages.forEach(restoreImage);
+  loadedElements.forEach(snap=>{
+    const data=cloneData(snap.data||{});
+    const rawId=Number(snap.id);
+    const id=Number.isFinite(rawId)&&rawId>0?rawId:nextId++;
+    const g=spawnEl({id:id,type:snap.type,data:data,label:snap.label||''});
+    elements.push({id:id,type:snap.type,data:data,el:g});
+  });
+
+  const maxElId=elements.length?Math.max(...elements.map(e=>e.id)):0;
+  const maxImgId=images.length?Math.max(...images.map(i=>i.id)):0;
+  nextId=Math.max(Number(project.nextId||1),maxElId+1);
+  imgNextId=Math.max(Number(project.imgNextId||1),maxImgId+1);
+  setForceSide(activeForce);
+  setTool('select');
+  lastDecorZoom=null;
+  updateTransform();
+}
+
+function loadProject(file){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      applyProject(JSON.parse(e.target.result));
+      showToast(`Проект загружен: ${elements.length} элементов, ${images.length} карт`,'success');
+    }catch(err){
+      showToast('Ошибка загрузки проекта: '+err.message,'error');
+    }
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+document.getElementById('projectInput').addEventListener('change', function(e){
+  if(e.target.files && e.target.files[0]){
+    loadProject(e.target.files[0]);
+    this.value = '';
+  }
+});
+
+// ─── ELEMENT BUILDERS ────────────────────────────────────────────────────
+function setPathStyle(el,color,width,dash){
+  el.setAttribute('stroke',color); el.setAttribute('stroke-width',width||2);
+  el.setAttribute('fill','none'); el.setAttribute('stroke-linecap','round');
+  el.setAttribute('stroke-linejoin','round'); el.setAttribute('vector-effect','non-scaling-stroke');
+  if(dash) el.setAttribute('stroke-dasharray',dash);
+}
+
+function makeArrowHead(pts,color){
+  const last=pts[pts.length-1],prev=pts[pts.length-2];
+  const angle=Math.atan2(last.y-prev.y,last.x-prev.x), hs=13/zoom, spread=.46;
+  const tip=NS('polygon');
+  tip.setAttribute('points',`${last.x},${last.y} ${last.x-hs*Math.cos(angle-spread)},${last.y-hs*Math.sin(angle-spread)} ${last.x-hs*Math.cos(angle+spread)},${last.y-hs*Math.sin(angle+spread)}`);
+  tip.setAttribute('fill',color); tip.setAttribute('stroke','#10101d'); tip.setAttribute('stroke-width',2/zoom);
+  tip.setAttribute('stroke-linejoin','round'); tip.setAttribute('vector-effect','non-scaling-stroke'); tip.style.pointerEvents='none';
+  return tip;
+}
+
+function buildFlexArrow(pts,dashed,color){
+  const g=NS('g'); g.dataset.label='';
+  const d=smoothPath(pts);
+  const halo=NS('path'); halo.setAttribute('d',d);
+  halo.setAttribute('stroke','#0b0b14'); halo.setAttribute('stroke-width',7);
+  halo.setAttribute('stroke-opacity','.7'); halo.setAttribute('fill','none');
+  halo.setAttribute('stroke-linecap','round'); halo.setAttribute('stroke-linejoin','round');
+  halo.setAttribute('vector-effect','non-scaling-stroke'); halo.style.cursor='move'; g.appendChild(halo);
+  const path=NS('path'); path.setAttribute('d',d);
+  setPathStyle(path,color,2.8,dashed?'10,7':null); path.style.cursor='move'; g.appendChild(path);
+  if(pts.length>=2) g.appendChild(makeArrowHead(pts,color));
+  return g;
+}
+function buildLine(start,end,color){
+  const g=NS('g'); g.dataset.label='';
+  const line=NS('line'); line.setAttribute('x1',start.x); line.setAttribute('y1',start.y);
+  line.setAttribute('x2',end.x); line.setAttribute('y2',end.y);
+  setPathStyle(line,color,2); line.style.cursor='move'; g.appendChild(line); return g;
+}
+function buildArea(pts,color){
+  const g=NS('g'); g.dataset.label='';
+  const poly=NS('polygon'); poly.setAttribute('points',pts.map(p=>`${p.x},${p.y}`).join(' '));
+  poly.setAttribute('fill',color); poly.setAttribute('fill-opacity','.15');
+  poly.setAttribute('stroke',color); poly.setAttribute('stroke-width',2);
+  poly.setAttribute('vector-effect','non-scaling-stroke'); poly.style.cursor='move';
+  g.appendChild(poly); return g;
+}
+function buildMarker(pts,color){
+  const g=NS('g'); g.dataset.label='';
+  const path=NS('path'); path.setAttribute('d',smoothPath(pts));
+  path.setAttribute('stroke',color); path.setAttribute('stroke-width',18);
+  path.setAttribute('fill','none'); path.setAttribute('stroke-linecap','round');
+  path.setAttribute('stroke-linejoin','round'); path.setAttribute('opacity','0.38');
+  path.setAttribute('vector-effect','non-scaling-stroke'); path.style.cursor='move';
+  g.appendChild(path); return g;
+}
+function buildMineField(pts,color){
+  const g=NS('g'); g.dataset.label='';
+  const d=smoothPath(pts);
+  const bg=NS('path'); bg.setAttribute('d',d); setPathStyle(bg,color,12,'7,5');
+  bg.setAttribute('opacity','0.45'); bg.style.cursor='move'; g.appendChild(bg);
+  const fg=NS('path'); fg.setAttribute('d',d); setPathStyle(fg,color,1.5,'3,4');
+  fg.style.pointerEvents='none'; g.appendChild(fg);
+  const sp=20/zoom; let ac=0,lc=0;
+  for(let i=1;i<pts.length;i++){ const sl=dist(pts[i-1],pts[i]); ac+=sl;
+    while(ac-lc>=sp){ const t=clamp((lc+sp-(ac-sl))/sl,0,1);
+      const mx=pts[i-1].x+(pts[i].x-pts[i-1].x)*t, my=pts[i-1].y+(pts[i].y-pts[i-1].y)*t;
+      const c=NS('circle'); c.setAttribute('cx',mx); c.setAttribute('cy',my);
+      c.setAttribute('r',4/zoom); c.setAttribute('fill','none'); c.setAttribute('stroke',color);
+      c.setAttribute('stroke-width',1); c.setAttribute('vector-effect','non-scaling-stroke');
+      c.style.pointerEvents='none'; g.appendChild(c); lc+=sp; } }
+  return g;
+}
+function buildTrench(pts,color){
+  const g=NS('g'); g.dataset.label='';
+  const d=smoothPath(pts); const main=NS('path'); main.setAttribute('d',d);
+  setPathStyle(main,color,3); main.setAttribute('opacity','0.85'); main.style.cursor='move'; g.appendChild(main);
+  const sp=10/zoom; let ac=0,lc=0;
+  for(let i=1;i<pts.length;i++){ const sl=dist(pts[i-1],pts[i]); ac+=sl;
+    while(ac-lc>=sp){ const t=clamp((lc+sp-(ac-sl))/sl,0,1);
+      const mx=pts[i-1].x+(pts[i].x-pts[i-1].x)*t, my=pts[i-1].y+(pts[i].y-pts[i-1].y)*t;
+      const angle=Math.atan2(pts[i].y-pts[i-1].y,pts[i].x-pts[i-1].x)-Math.PI/2, hs=7/zoom;
+      const tick=NS('line'); tick.setAttribute('x1',mx); tick.setAttribute('y1',my);
+      tick.setAttribute('x2',mx+hs*Math.cos(angle)); tick.setAttribute('y2',my+hs*Math.sin(angle));
+      tick.setAttribute('stroke',color); tick.setAttribute('stroke-width',1.5);
+      tick.setAttribute('vector-effect','non-scaling-stroke'); tick.setAttribute('opacity','0.7');
+      tick.style.pointerEvents='none'; g.appendChild(tick); lc+=sp; } }
+  return g;
+}
+function buildBoundary(pts,color){
+  const g=NS('g'); g.dataset.label='';
+  const d=smoothPath(pts); const main=NS('path'); main.setAttribute('d',d);
+  setPathStyle(main,color,2.6,'13,5'); main.style.cursor='move'; g.appendChild(main);
+  const sp=18/zoom; let ac=0,lc=0;
+  for(let i=1;i<pts.length;i++){ const sl=dist(pts[i-1],pts[i]); ac+=sl;
+    while(ac-lc>=sp){ const t=clamp((lc+sp-(ac-sl))/sl,0,1);
+      const mx=pts[i-1].x+(pts[i].x-pts[i-1].x)*t, my=pts[i-1].y+(pts[i].y-pts[i-1].y)*t;
+      const angle=Math.atan2(pts[i].y-pts[i-1].y,pts[i].x-pts[i-1].x)-Math.PI/2, len=13/zoom;
+      const tick=NS('line'); tick.setAttribute('x1',mx); tick.setAttribute('y1',my);
+      tick.setAttribute('x2',mx+len*Math.cos(angle)); tick.setAttribute('y2',my+len*Math.sin(angle));
+      tick.setAttribute('stroke',color); tick.setAttribute('stroke-width',2);
+      tick.setAttribute('vector-effect','non-scaling-stroke'); tick.setAttribute('opacity','.9');
+      tick.style.pointerEvents='none'; g.appendChild(tick); lc+=sp; } }
+  return g;
+}
+function makeArrowHeadAt(tip,base,color){
+  const angle=Math.atan2(tip.y-base.y,tip.x-base.x), hs=10/zoom, spread=.45;
+  const poly=NS('polygon');
+  poly.setAttribute('points',`${tip.x},${tip.y} ${tip.x-hs*Math.cos(angle-spread)},${tip.y-hs*Math.sin(angle-spread)} ${tip.x-hs*Math.cos(angle+spread)},${tip.y-hs*Math.sin(angle+spread)}`);
+  poly.setAttribute('fill',color); poly.setAttribute('stroke','#10101d'); poly.setAttribute('stroke-width',1.4/zoom);
+  poly.setAttribute('stroke-linejoin','round'); poly.style.pointerEvents='none'; return poly;
+}
+function formatDistance(start,end){ return `${Math.round(dist(start,end))} м`; }
+function makeSvgBadge(text,x,y,unit,color,cls){
+  const g=NS('g'); if(cls) g.classList.add(cls);
+  const font=12*unit, padX=6*unit, w=Math.max(38*unit,text.length*7.2*unit+padX*2), h=21*unit;
+  g.setAttribute('transform',`translate(${x},${y})`); g.setAttribute('pointer-events','none');
+  const bg=NS('rect'); bg.setAttribute('x',-w/2); bg.setAttribute('y',-h/2); bg.setAttribute('width',w); bg.setAttribute('height',h);
+  bg.setAttribute('rx',4*unit); bg.setAttribute('fill','#10101d'); bg.setAttribute('fill-opacity','.9');
+  bg.setAttribute('stroke',color||'#f0c040'); bg.setAttribute('stroke-width',1*unit); bg.setAttribute('stroke-opacity','.55');
+  const t=NS('text'); t.setAttribute('x',0); t.setAttribute('y',4.2*unit); t.setAttribute('fill','#f4d35e');
+  t.setAttribute('font-size',font); t.setAttribute('font-family','Segoe UI, Arial, sans-serif'); t.setAttribute('font-weight','700'); t.setAttribute('text-anchor','middle'); t.textContent=text;
+  g.appendChild(bg); g.appendChild(t); return g;
+}
+function buildMeasure(start,end,color){
+  const g=NS('g'); g.dataset.label='';
+  const line=NS('line'); line.setAttribute('x1',start.x); line.setAttribute('y1',start.y); line.setAttribute('x2',end.x); line.setAttribute('y2',end.y);
+  setPathStyle(line,color,2,'7,5'); line.style.cursor='move'; g.appendChild(line);
+  g.appendChild(makeArrowHeadAt(start,end,color)); g.appendChild(makeArrowHeadAt(end,start,color));
+  const mid={x:(start.x+end.x)/2,y:(start.y+end.y)/2}; const unit=1/zoom;
+  g.appendChild(makeSvgBadge(formatDistance(start,end),mid.x,mid.y-16*unit,unit,color,'measure-badge'));
+  return g;
+}
+function buildTextNote(data,color){
+  const g=NS('g'); g.dataset.label='';
+  const scale=data.scale||1, unit=scale/zoom, text=(data.text||'Текст').trim()||'Текст';
+  g.setAttribute('transform',`translate(${data.x},${data.y})`); g.style.cursor='move';
+  const badge=makeSvgBadge(text,0,0,unit,color,'text-note-badge');
+  g.appendChild(badge); return g;
+}
+function buildSymbol(sym,pos,color,scale){
+  const g=NS('g'); g.dataset.label=''; scale=scale||1;
+  g.setAttribute('transform',`translate(${pos.x},${pos.y}) scale(${scale/zoom})`);
+  g.innerHTML=symSVG(sym,color); g.style.cursor='move'; return g;
+}
+
+function registerEl(g,id){ g.dataset.eid=String(id); g.addEventListener('mousedown',()=>{}); return g; }
+
+function applyElementStyle(elData){
+  const d=elData.data||{};
+  if(d.opacity!==undefined) elData.el.style.opacity=d.opacity;
+  if(d.strokeWidth!==undefined){
+    elData.el.querySelectorAll('line,path,polygon').forEach(s=>{
+      if(!s.closest('.perm-label,.measure-badge,.text-note-badge')) s.setAttribute('stroke-width',d.strokeWidth);
+    });
+  }
+}
+
+function rebuildEl(elData){
+  const g=elData.el; while(g.firstChild) g.removeChild(g.firstChild);
+  const {type,data}=elData, pts=data.points||[];
+  let fresh;
+  if     (type==='flex-arrow')      fresh=buildFlexArrow(pts,false,data.color);
+  else if(type==='flex-arrow-dash') fresh=buildFlexArrow(pts,true,data.color);
+  else if(type==='wide-arrow')      fresh=buildWideArrow(pts,data.color);
+  else if(type==='line')            fresh=buildLine(data.start,data.end,data.color);
+  else if(type==='area')            fresh=buildArea(pts,data.color);
+  else if(type==='marker')          fresh=buildMarker(pts,data.color);
+  else if(type==='boundary')        fresh=buildBoundary(pts,data.color);
+  else if(type==='measure')         fresh=buildMeasure(data.start,data.end,data.color);
+  else if(type==='text')            fresh=buildTextNote(data,data.color);
+  else if(type==='mine')            fresh=buildMineField(pts,data.color);
+  else if(type==='trench')          fresh=buildTrench(pts,data.color);
+  else return;
+  while(fresh.firstChild) g.appendChild(fresh.firstChild);
+  applyElementStyle(elData);
+  updateLabel(elData);
+}
+
+// ─── PREVIEW HELPERS ─────────────────────────────────────────────────────
+function clearPreview(){ previewGrp.innerHTML=''; if(symPreview) previewGrp.appendChild(symPreview); }
+
+function smoothPathScreen(sp){
+  if(sp.length<2) return '';
+  if(sp.length===2) return `M${sp[0].x},${sp[0].y}L${sp[1].x},${sp[1].y}`;
+  let d=`M${sp[0].x.toFixed(1)},${sp[0].y.toFixed(1)}`;
+  for(let i=0;i<sp.length-1;i++){
+    const p0=sp[Math.max(0,i-1)],p1=sp[i],p2=sp[i+1],p3=sp[Math.min(sp.length-1,i+2)];
+    const cp1x=p1.x+(p2.x-p0.x)/6,cp1y=p1.y+(p2.y-p0.y)/6;
+    const cp2x=p2.x-(p3.x-p1.x)/6,cp2y=p2.y-(p3.y-p1.y)/6;
+    d+=`C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+function previewFlexArrow(pts,dashed,color){
+  clearPreview(); if(pts.length<2) return;
+  const sp=pts.map(toScreen), g=NS('g'); g.setAttribute('opacity','0.65');
+  const halo=NS('path'); halo.setAttribute('d',smoothPathScreen(sp));
+  halo.setAttribute('stroke','#0b0b14'); halo.setAttribute('stroke-width','7');
+  halo.setAttribute('stroke-opacity','.65'); halo.setAttribute('fill','none');
+  halo.setAttribute('stroke-linecap','round'); halo.setAttribute('stroke-linejoin','round'); g.appendChild(halo);
+  const path=NS('path'); path.setAttribute('d',smoothPathScreen(sp));
+  path.setAttribute('stroke',color); path.setAttribute('stroke-width','2.8');
+  path.setAttribute('fill','none'); path.setAttribute('stroke-linecap','round');
+  path.setAttribute('stroke-linejoin','round'); if(dashed) path.setAttribute('stroke-dasharray','10,7'); g.appendChild(path);
+  if(pts.length>=2){ const last=sp[sp.length-1],prev=sp[sp.length-2];
+    const angle=Math.atan2(last.y-prev.y,last.x-prev.x), hs=16, spread=.46;
+    const tip=NS('polygon');
+    tip.setAttribute('points',`${last.x},${last.y} ${last.x-hs*Math.cos(angle-spread)},${last.y-hs*Math.sin(angle-spread)} ${last.x-hs*Math.cos(angle+spread)},${last.y-hs*Math.sin(angle+spread)}`);
+    tip.setAttribute('fill',color); tip.setAttribute('stroke','#0b0b14'); tip.setAttribute('stroke-width','2'); tip.setAttribute('stroke-linejoin','round'); g.appendChild(tip); }
+  previewGrp.appendChild(g);
+}
+
+function previewLine(start,end,color){
+  clearPreview();
+  const ss=toScreen(start),se=toScreen(end),line=NS('line');
+  line.setAttribute('x1',ss.x); line.setAttribute('y1',ss.y);
+  line.setAttribute('x2',se.x); line.setAttribute('y2',se.y);
+  line.setAttribute('stroke',color); line.setAttribute('stroke-width','2.5'); line.setAttribute('opacity','0.7');
+  previewGrp.appendChild(line);
+}
+
+function previewArea(pts,color){
+  clearPreview(); if(pts.length<2) return;
+  const sp=pts.map(toScreen), poly=NS('polygon');
+  poly.setAttribute('points',sp.map(p=>`${p.x},${p.y}`).join(' '));
+  poly.setAttribute('fill',color); poly.setAttribute('fill-opacity','.12');
+  poly.setAttribute('stroke',color); poly.setAttribute('stroke-width','2');
+  poly.setAttribute('stroke-dasharray','6,4'); poly.setAttribute('opacity','0.75');
+  previewGrp.appendChild(poly);
+}
+
+function previewMarker(pts,color){
+  clearPreview(); if(pts.length<2) return;
+  const sp=pts.map(toScreen), path=NS('path');
+  path.setAttribute('d',smoothPathScreen(sp)); path.setAttribute('stroke',color);
+  path.setAttribute('stroke-width','18'); path.setAttribute('fill','none');
+  path.setAttribute('stroke-linecap','round'); path.setAttribute('opacity','0.35');
+  previewGrp.appendChild(path);
+}
+
+function previewFreehand(pts,kind,color){
+  clearPreview(); if(pts.length<2) return;
+  const sp=pts.map(toScreen), d=smoothPathScreen(sp);
+  if(kind==='mine'){
+    const bg=NS('path'); bg.setAttribute('d',d); bg.setAttribute('stroke',color); bg.setAttribute('stroke-width','12');
+    bg.setAttribute('fill','none'); bg.setAttribute('stroke-dasharray','7,5'); bg.setAttribute('opacity','0.45'); previewGrp.appendChild(bg);
+    const fg=NS('path'); fg.setAttribute('d',d); fg.setAttribute('stroke',color); fg.setAttribute('stroke-width','1.5');
+    fg.setAttribute('fill','none'); fg.setAttribute('stroke-dasharray','3,4'); previewGrp.appendChild(fg);
+  } else {
+    const main=NS('path'); main.setAttribute('d',d); main.setAttribute('stroke',color); main.setAttribute('stroke-width','3');
+    main.setAttribute('fill','none'); main.setAttribute('stroke-linecap','round'); main.setAttribute('opacity','0.8'); previewGrp.appendChild(main);
+    const hs=10;
+    for(let i=1;i<sp.length;i++){ const seg=dist(sp[i-1],sp[i]); if(seg<hs*1.5) continue;
+      const angle=Math.atan2(sp[i].y-sp[i-1].y,sp[i].x-sp[i-1].x)-Math.PI/2;
+      const mx=(sp[i-1].x+sp[i].x)/2, my=(sp[i-1].y+sp[i].y)/2;
+      const tick=NS('line'); tick.setAttribute('x1',mx); tick.setAttribute('y1',my);
+      tick.setAttribute('x2',mx+hs*Math.cos(angle)); tick.setAttribute('y2',my+hs*Math.sin(angle));
+      tick.setAttribute('stroke',color); tick.setAttribute('stroke-width','1.5'); tick.setAttribute('opacity','0.65');
+      previewGrp.appendChild(tick); }
+  }
+}
+
+function previewBoundary(pts,color){
+  clearPreview(); if(pts.length<2) return;
+  const sp=pts.map(toScreen), d=smoothPathScreen(sp);
+  const main=NS('path'); main.setAttribute('d',d); main.setAttribute('stroke',color);
+  main.setAttribute('stroke-width','2.6'); main.setAttribute('stroke-dasharray','13,5');
+  main.setAttribute('fill','none'); main.setAttribute('stroke-linecap','round'); previewGrp.appendChild(main);
+  const step=18;
+  for(let i=1;i<sp.length;i++){ const seg=dist(sp[i-1],sp[i]); if(seg<step) continue;
+    const angle=Math.atan2(sp[i].y-sp[i-1].y,sp[i].x-sp[i-1].x)-Math.PI/2;
+    for(let t=step;t<seg;t+=step){ const k=t/seg, mx=sp[i-1].x+(sp[i].x-sp[i-1].x)*k, my=sp[i-1].y+(sp[i].y-sp[i-1].y)*k;
+      const tick=NS('line'); tick.setAttribute('x1',mx); tick.setAttribute('y1',my);
+      tick.setAttribute('x2',mx+13*Math.cos(angle)); tick.setAttribute('y2',my+13*Math.sin(angle));
+      tick.setAttribute('stroke',color); tick.setAttribute('stroke-width','2'); previewGrp.appendChild(tick); } }
+}
+
+function previewMeasure(start,end,color){
+  clearPreview();
+  const ss=toScreen(start), se=toScreen(end), line=NS('line');
+  line.setAttribute('x1',ss.x); line.setAttribute('y1',ss.y); line.setAttribute('x2',se.x); line.setAttribute('y2',se.y);
+  line.setAttribute('stroke',color); line.setAttribute('stroke-width','2'); line.setAttribute('stroke-dasharray','7,5'); previewGrp.appendChild(line);
+  const mid={x:(ss.x+se.x)/2,y:(ss.y+se.y)/2};
+  previewGrp.appendChild(makeSvgBadge(formatDistance(start,end),mid.x,mid.y-16,1,color,'measure-badge'));
+}
+
+// ─── SELECTION ───────────────────────────────────────────────────────────
+function clearSelection(){ selectedIds.clear(); selGrp.innerHTML=''; propsPanel.classList.remove('visible'); }
+
+function getElBBox(el){
+  if(el.type==='symbol'){ const s=18*(el.data.scale||1)/zoom; return {x1:el.data.x-s,y1:el.data.y-s,x2:el.data.x+s,y2:el.data.y+s}; }
+  if(el.type==='text'){
+    const unit=(el.data.scale||1)/zoom, text=(el.data.text||'Текст').trim()||'Текст';
+    const w=Math.max(38*unit,text.length*7.2*unit+12*unit), h=24*unit;
+    return {x1:el.data.x-w/2,y1:el.data.y-h/2,x2:el.data.x+w/2,y2:el.data.y+h/2};
+  }
+  const pts=el.data.points||((el.type==='line'||el.type==='measure')?[el.data.start,el.data.end]:[]);
+  if(!pts.length) return {x1:0,y1:0,x2:0,y2:0};
+  return {x1:Math.min(...pts.map(p=>p.x)),y1:Math.min(...pts.map(p=>p.y)),x2:Math.max(...pts.map(p=>p.x)),y2:Math.max(...pts.map(p=>p.y))};
+}
+
+function drawSelBox(){
+  selGrp.innerHTML=''; if(!selectedIds.size) return;
+  let x1=Infinity,y1=Infinity,x2=-Infinity,y2=-Infinity;
+  selectedIds.forEach(id=>{ const el=elements.find(e=>e.id===id); if(!el) return;
+    const bb=getElBBox(el); x1=Math.min(x1,bb.x1); y1=Math.min(y1,bb.y1); x2=Math.max(x2,bb.x2); y2=Math.max(y2,bb.y2); });
+  if(x1===Infinity) return;
+  const pad=8/zoom, box=NS('rect');
+  box.setAttribute('x',x1-pad); box.setAttribute('y',y1-pad);
+  box.setAttribute('width',x2-x1+pad*2); box.setAttribute('height',y2-y1+pad*2);
+  box.setAttribute('fill','rgba(240,192,64,.07)'); box.setAttribute('stroke','#f0c040');
+  box.setAttribute('stroke-width',1.5/zoom); box.setAttribute('stroke-dasharray',`${5/zoom},${3/zoom}`);
+  box.setAttribute('pointer-events','none'); selGrp.appendChild(box);
+  if(selectedIds.size===1){
+    const el=elements.find(e=>e.id===Array.from(selectedIds)[0]);
+    if(el&&el.type==='symbol'){
+      [[x1-pad,y1-pad],[x2+pad,y1-pad],[x1-pad,y2+pad],[x2+pad,y2+pad]].forEach(([cx,cy])=>{
+        const r=NS('rect'),hs=5/zoom; r.setAttribute('x',cx-hs); r.setAttribute('y',cy-hs);
+        r.setAttribute('width',hs*2); r.setAttribute('height',hs*2); r.setAttribute('class','resize-handle'); selGrp.appendChild(r);
+      });
+    }
+  }
+  showProps();
+}
+
+function selectInRect(r){ elements.forEach(el=>{ const bb=getElBBox(el); if(bb.x2>=r.x1&&bb.x1<=r.x2&&bb.y2>=r.y1&&bb.y1<=r.y2) selectedIds.add(el.id); }); drawSelBox(); }
+
+// ─── DRAG & RESIZE ───────────────────────────────────────────────────────
+function applyDrag(ds,dx,dy){
+  const d=ds.elData.data;
+  if(ds.elData.type==='symbol'){
+    d.x=ds.orig.x+dx; d.y=ds.orig.y+dy;
+    ds.elData.el.setAttribute('transform',`translate(${d.x},${d.y}) scale(${(d.scale||1)/zoom})`);
+  } else if(ds.elData.type==='text'){
+    d.x=ds.orig.x+dx; d.y=ds.orig.y+dy;
+    ds.elData.el.setAttribute('transform',`translate(${d.x},${d.y})`);
+  } else if(ds.elData.type==='line'||ds.elData.type==='measure'){
+    d.start={x:ds.orig.start.x+dx,y:ds.orig.start.y+dy};
+    d.end={x:ds.orig.end.x+dx,y:ds.orig.end.y+dy};
+    rebuildEl(ds.elData);
+  } else if(d.points){
+    d.points=ds.orig.points.map(p=>({x:p.x+dx,y:p.y+dy}));
+    rebuildEl(ds.elData);
+  }
+  if(ds.elData.type==='wide-arrow') updateWideArrowMerges();
+  updateLabel(ds.elData); if(selectedIds.has(ds.id)) drawSelBox();
+}
+
+function applyResize(rs,dx,dy){
+  const d=rs.elData.data; d.scale=clamp((d.scale||1)+(dx+dy)*0.005,0.2,4);
+  if(rs.elData.type==='symbol') rs.elData.el.setAttribute('transform',`translate(${d.x},${d.y}) scale(${d.scale/zoom})`);
+  document.getElementById('propScale').value=Math.round(d.scale*100);
+  drawSelBox(); updateLabel(rs.elData);
+}
+
+function applyImageResize(rs,dx,dy){
+  const im=rs.imgObj; let nw=rs.origW,nh=rs.origH,nx=rs.origCx,ny=rs.origCy;
+  if(rs.corner==='se'){nw=rs.origW+dx*2;nh=rs.origH+dy*2;nx=rs.origCx+dx;ny=rs.origCy+dy;}
+  else if(rs.corner==='sw'){nw=rs.origW-dx*2;nh=rs.origH+dy*2;nx=rs.origCx-dx;ny=rs.origCy+dy;}
+  else if(rs.corner==='ne'){nw=rs.origW+dx*2;nh=rs.origH-dy*2;nx=rs.origCx+dx;ny=rs.origCy-dy;}
+  else{nw=rs.origW-dx*2;nh=rs.origH-dy*2;nx=rs.origCx-dx;ny=rs.origCy-dy;}
+  nw=Math.max(20,nw); nh=Math.max(20,nh);
+  im.w=nw; im.h=nh; im.cx=nx; im.cy=ny;
+  im.el.setAttribute('width',nw); im.el.setAttribute('height',nh);
+  im.el.setAttribute('x',nx-nw/2); im.el.setAttribute('y',ny-nh/2);
+  showImageBorder();
+}
+
+// ─── LABELS ──────────────────────────────────────────────────────────────
+function updateLabel(elData){
+  const old=elData.el.querySelector('.perm-label'); if(old) old.remove();
+  const text=(elData.el.dataset.label||'').trim(); if(!text) return;
+  const isSymbol=elData.type==='symbol';
+  const scale=isSymbol?(elData.data.scale||1):zoom;
+  const unit=1/Math.max(.01,scale);
+  const font=12*unit, padX=6*unit, h=21*unit;
+  const w=Math.max(34*unit,text.length*7.1*unit+padX*2);
+  let anchor={x:0,y:0};
+  if(isSymbol){
+    anchor={x:0,y:-32*unit};
+  } else {
+    const bb=getElBBox(elData);
+    anchor={x:(bb.x1+bb.x2)/2,y:bb.y1-18*unit};
+  }
+  const g=NS('g'); g.classList.add('perm-label');
+  g.setAttribute('transform',`translate(${anchor.x},${anchor.y})`);
+  g.setAttribute('pointer-events','none');
+  const bg=NS('rect');
+  bg.setAttribute('x',-w/2); bg.setAttribute('y',-h/2);
+  bg.setAttribute('width',w); bg.setAttribute('height',h);
+  bg.setAttribute('rx',4*unit); bg.setAttribute('fill','#10101d');
+  bg.setAttribute('fill-opacity','.88'); bg.setAttribute('stroke','#f0c040');
+  bg.setAttribute('stroke-width',1.1*unit); bg.setAttribute('stroke-opacity','.45');
+  const t=NS('text');
+  t.setAttribute('x',0); t.setAttribute('y',4.2*unit);
+  t.setAttribute('fill','#f4d35e'); t.setAttribute('font-size',font);
+  t.setAttribute('font-family','Segoe UI, Arial, sans-serif');
+  t.setAttribute('font-weight','700'); t.setAttribute('text-anchor','middle');
+  t.textContent=text;
+  g.appendChild(bg); g.appendChild(t); elData.el.appendChild(g);
+}
+
+// ─── HISTORY ─────────────────────────────────────────────────────────────
+function saveHistory(){
+  history.push({
+    elements: elements.map(el=>({id:el.id,type:el.type,data:cloneData(el.data),label:el.el.dataset.label||''})),
+    images: images.map(im=>({id:im.id,dataUrl:im.dataUrl,cx:im.cx,cy:im.cy,w:im.w,h:im.h,origW:im.origW,origH:im.origH})),
+    nextId,
+    imgNextId
+  });
+  if(history.length>60) history.shift();
+}
+
+function undoAction(){
+  if(!history.length) return;
+  const snap=history.pop(); elemGroup.innerHTML=''; imgGrp.innerHTML='';
+  elements=[]; images=[];
+  const snapElements=Array.isArray(snap)?snap:(snap.elements||[]);
+  snapElements.forEach(s=>{ const data=cloneData(s.data||{}), el=spawnEl({...s,data}); elements.push({id:s.id,type:s.type,data,el}); });
+  if(!Array.isArray(snap)&&(snap.images||[]).length){
+    (snap.images||[]).forEach(restoreImage);
+  }
+  nextId=(!Array.isArray(snap)&&snap.nextId)|| (elements.length?Math.max(...elements.map(e=>e.id))+1:1);
+  imgNextId=(!Array.isArray(snap)&&snap.imgNextId)|| (images.length?Math.max(...images.map(i=>i.id))+1:1);
+  clearSelection(); deselectImages();
+  lastDecorZoom=null;
+  updateImageInteractivity(); updateTransform();
+  showToast('Действие отменено','success');
+}
+
+function spawnEl(s){
+  const {type,data,label}=s; let g;
+  if     (type==='flex-arrow')      g=buildFlexArrow(data.points,false,data.color);
+  else if(type==='flex-arrow-dash') g=buildFlexArrow(data.points,true,data.color);
+  else if(type==='wide-arrow')      g=buildWideArrow(data.points,data.color);
+  else if(type==='line')            g=buildLine(data.start,data.end,data.color);
+  else if(type==='area')            g=buildArea(data.points,data.color);
+  else if(type==='marker')          g=buildMarker(data.points,data.color);
+  else if(type==='boundary')        g=buildBoundary(data.points,data.color);
+  else if(type==='measure')         g=buildMeasure(data.start,data.end,data.color);
+  else if(type==='text')            g=buildTextNote(data,data.color);
+  else if(type==='mine')            g=buildMineField(data.points,data.color);
+  else if(type==='trench')          g=buildTrench(data.points,data.color);
+  else if(type==='symbol')          g=buildSymbol(data.symbol,{x:data.x,y:data.y},data.color,data.scale);
+  else g=NS('g');
+  registerEl(g,s.id); g.dataset.label=label||''; elemGroup.appendChild(g);
+  applyElementStyle({id:s.id,type,data,el:g});
+  updateLabel({id:s.id,type,data,el:g});
+  return g;
+}
+
+// ─── PROPS PANEL ─────────────────────────────────────────────────────────
+function showProps(){
+  if(!selectedIds.size&&!selectedImgId){ propsPanel.classList.remove('visible'); return; }
+  propsPanel.classList.add('visible'); document.getElementById('scaleRow').style.display='none';
+  if(selectedImgId){ document.getElementById('propsTitle').textContent='Изображение'; document.getElementById('propLabel').value=''; return; }
+  if(selectedIds.size>1){ document.getElementById('propsTitle').textContent=`Выбрано: ${selectedIds.size}`; document.getElementById('propLabel').value=''; return; }
+  const elData=elements.find(e=>e.id===Array.from(selectedIds)[0]); if(!elData) return;
+  const names={'symbol':'Символ: '+(elData.data.symbol||''),'flex-arrow':'Гибкая стрелка','flex-arrow-dash':'Штриховая стрелка','wide-arrow':'Широкая стрелка','line':'Линия','area':'Зона','boundary':'Рубеж','measure':'Линейка','text':'Текстовая метка','marker':'Маркер','mine':'Минное поле','trench':'Траншея'};
+  document.getElementById('propsTitle').textContent=names[elData.type]||'Элемент';
+  document.getElementById('propLabel').value=elData.type==='text'?(elData.data.text||''):(elData.el.dataset.label||'');
+  document.getElementById('propStroke').value=elData.data.strokeWidth||2;
+  document.getElementById('propOpacity').value=elData.data.opacity||1;
+  if(elData.type==='symbol'||elData.type==='text'){ document.getElementById('scaleRow').style.display='flex'; document.getElementById('propScale').value=Math.round((elData.data.scale||1)*100); }
+}
+
+document.getElementById('propStroke').addEventListener('input',function(){
+  const val=Number(this.value);
+  selectedIds.forEach(id=>{ const el=elements.find(e=>e.id===id); if(!el) return; el.data.strokeWidth=val; applyElementStyle(el); });
+});
+document.getElementById('propOpacity').addEventListener('input',function(){
+  const val=this.value;
+  selectedIds.forEach(id=>{ const el=elements.find(e=>e.id===id); if(!el) return; el.data.opacity=Number(val); applyElementStyle(el); });
+});
+document.getElementById('propScale').addEventListener('input',function(){
+  if(selectedIds.size!==1) return;
+  const el=elements.find(e=>e.id===Array.from(selectedIds)[0]); if(!el||(el.type!=='symbol'&&el.type!=='text')) return;
+  el.data.scale=this.value/100;
+  if(el.type==='symbol') el.el.setAttribute('transform',`translate(${el.data.x},${el.data.y}) scale(${el.data.scale/zoom})`);
+  else rebuildEl(el);
+  drawSelBox(); updateLabel(el);
+});
+document.getElementById('propLabel').addEventListener('input',function(){
+  if(selectedIds.size!==1) return;
+  const el=elements.find(e=>e.id===Array.from(selectedIds)[0]); if(!el) return;
+  if(el.type==='text'){ el.data.text=this.value; rebuildEl(el); drawSelBox(); }
+  else { el.el.dataset.label=this.value; updateLabel(el); }
+});
+
+// ─── TOOL MANAGEMENT ─────────────────────────────────────────────────────
+function setForceSide(side){
+  activeForce=side==='enemy'?'enemy':'friendly';
+  document.getElementById('forceFriendlyBtn').classList.toggle('active',activeForce==='friendly');
+  document.getElementById('forceEnemyBtn').classList.toggle('active',activeForce==='enemy');
+  document.documentElement.style.setProperty('--friendly',document.getElementById('colorFriendly').value);
+  document.documentElement.style.setProperty('--enemy',document.getElementById('colorEnemy').value);
+  if(currentTool==='symbol'&&currentSymbol){ createSymPreview(); refreshSymPreviewPos(); }
+  updateStatus();
+}
+
+function setTool(tool,symBtn){
+  currentTool=tool; currentSymbol=symBtn?symBtn.dataset.symbol:null;
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.sym-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#topSelectBtn,#topPanBtn').forEach(b=>b.classList.remove('active'));
+  const tb=document.querySelector(`[data-tool="${tool}"]`); if(tb) tb.classList.add('active');
+  if(symBtn) symBtn.classList.add('active');
+  if(tool==='select') document.getElementById('topSelectBtn').classList.add('active');
+  if(tool==='pan')    document.getElementById('topPanBtn').classList.add('active');
+  canvasArea.className='canvas-area';
+  if(tool==='pan') canvasArea.classList.add('tool-pan');
+  const drawTools=['flex-arrow','flex-arrow-dash','wide-arrow','line','area','boundary','measure','marker','mine','trench','symbol','text'];
+  if(drawTools.includes(tool)) canvasArea.classList.add('tool-draw');
+  clearPreview();
+  if(tool==='symbol'&&currentSymbol) createSymPreview(); else removeSymPreview();
+  if(tool!=='select'){ clearSelection(); deselectImages(); }
+  updateImageInteractivity();
+  updateStatus();
+  isDrawing=false; drawPts=[];
+}
+
+// ─── EVENTS ─────────────────────────────────────────────────────────────
+let lastWorldMouse={x:0,y:0};
+
+svg.addEventListener('mousemove',e=>{ lastWorldMouse=getSvgPt(e); coordDisplay.textContent=`${Math.round(lastWorldMouse.x)}, ${Math.round(lastWorldMouse.y)}`; });
+svg.addEventListener('mousedown', onMouseDown);
+svg.addEventListener('mousemove', onMouseMove);
+window.addEventListener('mouseup', onMouseUp);
+svg.addEventListener('dblclick',  onDblClick);
+canvasArea.addEventListener('wheel', onWheel, {passive:false});
+document.addEventListener('keydown', onKeyDown);
+svg.addEventListener('contextmenu', e=>e.preventDefault());
+
+function onMouseDown(e){
+  if(e.button===1||currentTool==='pan'){
+    isPanning=true; panStartX=e.clientX-panX; panStartY=e.clientY-panY;
+    canvasArea.classList.add('panning'); e.preventDefault(); return;
+  }
+  if(e.button!==0) return;
+  const p=getSvgPt(e);
+
+  // Resize handle?
+  const rh=e.target.closest('.resize-handle');
+  if(rh&&currentTool==='select'){
+    const imgId=rh.dataset.imgId;
+    if(imgId){
+      const im=images.find(i=>i.id===parseInt(imgId)); if(im){ saveHistory(); deselectImages(); selectImage(im.id); resizeState={imgObj:im,corner:rh.dataset.corner,origW:im.w,origH:im.h,origCx:im.cx,origCy:im.cy,startX:p.x,startY:p.y}; }
+    } else {
+      const id=Array.from(selectedIds)[0]; const elData=elements.find(el=>el.id===id);
+      if(elData&&elData.type==='symbol'){ saveHistory(); resizeState={id,elData,orig:JSON.parse(JSON.stringify(elData.data)),startX:p.x,startY:p.y}; }
+    }
+    e.stopPropagation(); return;
+  }
+
+  // Image drag?
+  if(currentTool==='select'&&selectedImgId){
+    const im=images.find(i=>i.id===selectedImgId);
+    if(im&&e.target===im.el){ imgDrag={obj:im,ox:im.cx,oy:im.cy,sx:p.x,sy:p.y}; return; }
+  }
+
+  if(currentTool==='select'){
+    const target=e.target.closest('[data-eid]');
+    if(target){
+      const id=parseInt(target.dataset.eid);
+      if(!e.ctrlKey&&!e.metaKey&&!selectedIds.has(id)) selectedIds.clear();
+      if(e.ctrlKey||e.metaKey){ if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id); }
+      else selectedIds.add(id);
+      deselectImages(); drawSelBox();
+      const elData=elements.find(el=>el.id===id);
+      if(elData){ saveHistory(); dragState={id,elData,orig:JSON.parse(JSON.stringify(elData.data)),startX:p.x,startY:p.y}; }
+      return;
+    }
+    if(!e.ctrlKey&&!e.metaKey){ clearSelection(); deselectImages(); }
+    rubberState={sx:p.x,sy:p.y}; return;
+  }
+
+  if(currentTool==='text'){
+    const text=prompt('Текстовая метка:','');
+    if(text===null||!text.trim()) return;
+    saveHistory(); const id=nextId++, color=getColor();
+    const data={x:p.x,y:p.y,text:text.trim(),color,scale:1};
+    const g=buildTextNote(data,color); registerEl(g,id); elemGroup.appendChild(g);
+    elements.push({id,type:'text',data,el:g}); updateStatus(); return;
+  }
+
+  if(currentTool==='symbol'&&currentSymbol){
+    saveHistory(); const id=nextId++; const color=getColor();
+    const g=buildSymbol(currentSymbol,p,color,1); registerEl(g,id); elemGroup.appendChild(g);
+    elements.push({id,type:'symbol',data:{symbol:currentSymbol,x:p.x,y:p.y,color,scale:1},el:g}); updateStatus(); return;
+  }
+
+  const drawTools=['flex-arrow','flex-arrow-dash','wide-arrow','line','area','boundary','measure','marker','mine','trench'];
+  if(drawTools.includes(currentTool)){ isDrawing=true; drawPts=[p]; lastAddedPt=p; clearPreview(); }
+}
+
+function onMouseMove(e){
+  if(isPanning){ panX=e.clientX-panStartX; panY=e.clientY-panStartY; updateTransform(); return; }
+
+  if(imgDrag){
+    const p=getSvgPt(e); imgDrag.obj.cx=imgDrag.ox+(p.x-imgDrag.sx); imgDrag.obj.cy=imgDrag.oy+(p.y-imgDrag.sy);
+    imgDrag.obj.el.setAttribute('x',imgDrag.obj.cx-imgDrag.obj.w/2); imgDrag.obj.el.setAttribute('y',imgDrag.obj.cy-imgDrag.obj.h/2);
+    showImageBorder(); return;
+  }
+  if(resizeState){
+    const p=getSvgPt(e);
+    if(resizeState.imgObj) applyImageResize(resizeState,p.x-resizeState.startX,p.y-resizeState.startY);
+    else applyResize(resizeState,p.x-resizeState.startX,p.y-resizeState.startY);
+    return;
+  }
+  if(dragState){ const p=getSvgPt(e); applyDrag(dragState,p.x-dragState.startX,p.y-dragState.startY); return; }
+
+  if(currentTool==='symbol'&&currentSymbol){ refreshSymPreviewPos(getSvgPt(e)); return; }
+
+  if(!isDrawing){
+    if(rubberState){ const p=getSvgPt(e); drawRubberBand(rubberState.sx,rubberState.sy,p.x,p.y); }
+    return;
+  }
+
+  const p=getSvgPt(e);
+  const minPx=3/zoom;
+  if(lastAddedPt&&dist(p,lastAddedPt)<minPx) return;
+  drawPts.push(p); lastAddedPt=p;
+  const color=getColor();
+
+  if(currentTool==='flex-arrow')           previewFlexArrow(drawPts,false,color);
+  else if(currentTool==='flex-arrow-dash') previewFlexArrow(drawPts,true,color);
+  else if(currentTool==='wide-arrow')      previewWideArrow(drawPts,color);
+  else if(currentTool==='line'&&drawPts.length>=2) previewLine(drawPts[0],p,color);
+  else if(currentTool==='area')            previewArea(drawPts,color);
+  else if(currentTool==='boundary')        previewBoundary(drawPts,color);
+  else if(currentTool==='measure'&&drawPts.length>=2) previewMeasure(drawPts[0],p,color);
+  else if(currentTool==='marker')          previewMarker(drawPts,color);
+  else if(currentTool==='mine'||currentTool==='trench') previewFreehand(drawPts,currentTool,color);
+}
+
+function onMouseUp(e){
+  if(isPanning){ isPanning=false; canvasArea.classList.remove('panning'); return; }
+  if(imgDrag){ imgDrag=null; return; }
+  if(resizeState){ resizeState=null; return; }
+  if(dragState){ dragState=null; return; }
+
+  if(rubberState){
+    const p=getSvgPt(e);
+    const r={x1:Math.min(rubberState.sx,p.x),y1:Math.min(rubberState.sy,p.y),x2:Math.max(rubberState.sx,p.x),y2:Math.max(rubberState.sy,p.y)};
+    if(r.x2-r.x1>5/zoom||r.y2-r.y1>5/zoom) selectInRect(r);
+    rubberState=null; clearPreview(); return;
+  }
+
+  if(!isDrawing) return;
+  isDrawing=false; clearPreview();
+  if(drawPts.length<2) return;
+
+  const color=getColor(), tool=currentTool, id=nextId++;
+  let g=null, data=null;
+  const simplified=simplify(drawPts,1.0/zoom);
+
+  if(tool==='flex-arrow'||tool==='flex-arrow-dash'){
+    if(simplified.length<2) return; saveHistory();
+    g=buildFlexArrow(simplified,tool==='flex-arrow-dash',color); data={points:simplified,color};
+  } else if(tool==='wide-arrow'){
+    if(simplified.length<2) return; saveHistory();
+    g=buildWideArrow(simplified,color); data={points:simplified,color};
+  } else if(tool==='line'){
+    const start=drawPts[0],end=drawPts[drawPts.length-1];
+    if(dist(start,end)<5/zoom) return; saveHistory();
+    g=buildLine(start,end,color); data={start,end,color};
+  } else if(tool==='measure'){
+    const start=drawPts[0],end=drawPts[drawPts.length-1];
+    if(dist(start,end)<5/zoom) return; saveHistory();
+    g=buildMeasure(start,end,color); data={start,end,color};
+  } else if(tool==='area'){
+    if(simplified.length<3) return; saveHistory();
+    g=buildArea(simplified,color); data={points:simplified,color};
+  } else if(tool==='boundary'){
+    if(simplified.length<2) return; saveHistory();
+    g=buildBoundary(simplified,color); data={points:simplified,color};
+  } else if(tool==='marker'){
+    if(drawPts.length<2) return; saveHistory();
+    g=buildMarker(drawPts,color); data={points:drawPts.map(p=>({x:p.x,y:p.y})),color};
+  } else if(tool==='mine'){
+    if(simplified.length<2) return; saveHistory();
+    g=buildMineField(simplified,color); data={points:simplified,color};
+  } else if(tool==='trench'){
+    if(simplified.length<2) return; saveHistory();
+    g=buildTrench(simplified,color); data={points:simplified,color};
+  }
+
+  if(g&&data){
+    registerEl(g,id); elemGroup.appendChild(g); elements.push({id,type:tool,data,el:g});
+    if(tool==='wide-arrow') updateWideArrowMerges();
+    updateStatus();
+  }
+  drawPts=[];
+}
+
+function drawRubberBand(sx,sy,ex,ey){
+  clearPreview(); if(symPreview) previewGrp.appendChild(symPreview);
+  const ss=toScreen({x:sx,y:sy}),se=toScreen({x:ex,y:ey}),rect=NS('rect');
+  rect.setAttribute('x',Math.min(ss.x,se.x)); rect.setAttribute('y',Math.min(ss.y,se.y));
+  rect.setAttribute('width',Math.abs(se.x-ss.x)); rect.setAttribute('height',Math.abs(se.y-ss.y));
+  rect.setAttribute('fill','rgba(240,192,64,.08)'); rect.setAttribute('stroke','#f0c040');
+  rect.setAttribute('stroke-width','1.5'); rect.setAttribute('stroke-dasharray','5,3'); rect.setAttribute('pointer-events','none');
+  previewGrp.appendChild(rect);
+}
+
+function onDblClick(e){
+  if(currentTool!=='select'||selectedIds.size!==1) return;
+  const elData=elements.find(el=>el.id===Array.from(selectedIds)[0]); if(!elData) return;
+  const label=prompt('Подпись:',elData.el.dataset.label||'');
+  if(label!==null){ elData.el.dataset.label=label; updateLabel(elData); }
+}
+
+function onWheel(e){
+  e.preventDefault();
+  const f=e.deltaY<0?1.14:1/1.14, r=canvasArea.getBoundingClientRect();
+  panX=(e.clientX-r.left)-(e.clientX-r.left-panX)*f; panY=(e.clientY-r.top)-(e.clientY-r.top-panY)*f;
+  zoom=clamp(zoom*f,0.04,24); updateTransform();
+  if(currentTool==='symbol') refreshSymPreviewPos();
+}
+
+function onKeyDown(e){
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  if((e.key==='Delete'||e.key==='Backspace')&&!e.ctrlKey){ e.preventDefault(); deleteSelected(); return; }
+  if(e.ctrlKey&&e.key==='z'){ e.preventDefault(); undoAction(); return; }
+  if(e.ctrlKey&&e.key==='a'){ e.preventDefault(); elements.forEach(el=>selectedIds.add(el.id)); drawSelBox(); return; }
+  if(e.ctrlKey&&e.key==='d'){ e.preventDefault(); duplicateSelected(); return; }
+  if(e.key==='Escape'){ setTool('select'); return; }
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)&&selectedIds.size){
+    e.preventDefault();
+    const step=(e.shiftKey?10:1)/zoom;
+    const dx=e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0;
+    const dy=e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0;
+    saveHistory();
+    selectedIds.forEach(id=>{ const el=elements.find(e2=>e2.id===id); if(!el) return;
+      const ds={id,elData:el,orig:JSON.parse(JSON.stringify(el.data)),startX:0,startY:0}; applyDrag(ds,dx,dy); });
+  }
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────────
+function offsetElementData(type,data,dx,dy){
+  if(type==='symbol'||type==='text'){ data.x+=dx; data.y+=dy; }
+  else if(type==='line'||type==='measure'){
+    data.start={x:data.start.x+dx,y:data.start.y+dy};
+    data.end={x:data.end.x+dx,y:data.end.y+dy};
+  } else if(data.points){
+    data.points=data.points.map(p=>({x:p.x+dx,y:p.y+dy}));
+  }
+}
+
+function duplicateSelected(){
+  if(!selectedIds.size) return;
+  saveHistory();
+  const dx=24/zoom, dy=24/zoom, newIds=[];
+  Array.from(selectedIds).forEach(id=>{
+    const src=elements.find(e=>e.id===id); if(!src) return;
+    const data=cloneData(src.data); offsetElementData(src.type,data,dx,dy);
+    const newId=nextId++, g=spawnEl({id:newId,type:src.type,data,label:src.el.dataset.label||''});
+    elements.push({id:newId,type:src.type,data,el:g}); newIds.push(newId);
+  });
+  selectedIds.clear(); newIds.forEach(id=>selectedIds.add(id));
+  updateWideArrowMerges(); drawSelBox(); updateStatus();
+  showToast(`Дублировано: ${newIds.length}`,'success');
+}
+
+function deleteSelected(){
+  const hadElements=selectedIds.size>0;
+  if(hadElements){ saveHistory();
+    elements=elements.filter(el=>{ if(selectedIds.has(el.id)){el.el.remove();return false;} return true; });
+    clearSelection(); }
+  if(selectedImgId){ const idx=images.findIndex(im=>im.id===selectedImgId);
+    if(!hadElements) saveHistory();
+    if(idx>=0){images[idx].el.remove();images.splice(idx,1);} deselectImages(); }
+  updateWideArrowMerges();
+  updateStatus();
+}
+
+function clearAll(){
+  if(!confirm('Удалить всё?')) return;
+  saveHistory(); elemGroup.innerHTML=''; elements=[];
+  images.forEach(im=>im.el.remove()); images=[];
+  clearSelection(); deselectImages();
+  updateWideArrowMerges();
+  updateStatus(); showToast('Холст очищен','success');
+}
+
+function mergeBounds(a,b){
+  if(!b) return a;
+  if(!a) return {x:b.x,y:b.y,width:b.width,height:b.height};
+  const x1=Math.min(a.x,b.x), y1=Math.min(a.y,b.y);
+  const x2=Math.max(a.x+a.width,b.x+b.width), y2=Math.max(a.y+a.height,b.y+b.height);
+  return {x:x1,y:y1,width:x2-x1,height:y2-y1};
+}
+
+function visibleWorldBounds(){
+  const r=canvasArea.getBoundingClientRect();
+  return {x:-panX/zoom,y:-panY/zoom,width:r.width/zoom,height:r.height/zoom};
+}
+
+function contentBounds(){
+  let box=null;
+  try{
+    if(elemGroup.children.length){
+      const b=elemGroup.getBBox();
+      if(isFinite(b.width)&&isFinite(b.height)) box=mergeBounds(box,{x:b.x,y:b.y,width:b.width,height:b.height});
+    }
+  }catch(_){}
+  images.forEach(im=>{
+    box=mergeBounds(box,{x:im.cx-im.w/2,y:im.cy-im.h/2,width:im.w,height:im.h});
+  });
+  if(!box||box.width<1||box.height<1) box=visibleWorldBounds();
+  const pad=Math.max(24,48/zoom);
+  return {x:box.x-pad,y:box.y-pad,width:Math.max(200,box.width+pad*2),height:Math.max(160,box.height+pad*2)};
+}
+
+function exportClone(bounds,scale,forRaster){
+  const outW=Math.round(bounds.width*scale), outH=Math.round(bounds.height*scale);
+  const clone=svg.cloneNode(true);
+  clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+  clone.setAttribute('xmlns:xlink','http://www.w3.org/1999/xlink');
+  clone.setAttribute('width',outW);
+  clone.setAttribute('height',outH);
+  clone.setAttribute('viewBox',`0 0 ${bounds.width} ${bounds.height}`);
+  const clonedViewport=clone.querySelector('#viewport');
+  if(clonedViewport) clonedViewport.setAttribute('transform',`translate(${-bounds.x},${-bounds.y})`);
+  clone.querySelector('#selectionGroup')?.remove();
+  clone.querySelector('#previewGroup')?.remove();
+  clone.querySelector('#imgBorder')?.remove();
+  clone.querySelectorAll('.resize-handle').forEach(n=>n.remove());
+  if(forRaster) clone.querySelectorAll('[vector-effect]').forEach(n=>n.removeAttribute('vector-effect'));
+  return {clone,outW,outH};
+}
+
+function exportSource(scaleOverride,forRaster){
+  updateTransform();
+  const bounds=contentBounds();
+  const requested=finiteNumber(scaleOverride||document.getElementById('exportScale').value,2);
+  const maxScale=Math.min(4,12000/bounds.width,12000/bounds.height);
+  const scale=clamp(Math.min(requested,maxScale),0.1,4);
+  const {clone,outW,outH}=exportClone(bounds,scale,forRaster);
+  const source='<?xml version="1.0" encoding="UTF-8"?>'+new XMLSerializer().serializeToString(clone);
+  return {source,outW,outH,scale,requested};
+}
+
+function exportSVG(){
+  const {source}=exportSource(1,false);
+  downloadBlob(new Blob([source],{type:'image/svg+xml;charset=utf-8'}),`combat_plan_${safeStamp()}.svg`);
+  showToast('SVG экспортирован','success');
+}
+
+function exportPNG(){
+  const {source,outW,outH,scale,requested}=exportSource(undefined,true);
+  const url=URL.createObjectURL(new Blob([source],{type:'image/svg+xml;charset=utf-8'}));
+  const canvas=document.createElement('canvas'); canvas.width=outW; canvas.height=outH;
+  const img=new Image();
+  img.onload=()=>{
+    const ctx=canvas.getContext('2d');
+    ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+    ctx.drawImage(img,0,0,outW,outH); URL.revokeObjectURL(url);
+    const done=blob=>{ if(blob) downloadBlob(blob,`combat_plan_${safeStamp()}_${scale.toFixed(1)}x.png`); else downloadBlob(new Blob([source],{type:'image/svg+xml;charset=utf-8'}),`combat_plan_${safeStamp()}.svg`); };
+    if(canvas.toBlob) canvas.toBlob(done,'image/png',1);
+    else {
+      const a=document.createElement('a'); a.download=`combat_plan_${safeStamp()}_${scale.toFixed(1)}x.png`; a.href=canvas.toDataURL('image/png'); a.click();
+    }
+    showToast(scale<requested?`PNG экспортирован в ${scale.toFixed(1)}x из-за лимита размера`:'PNG экспортирован','success');
+  };
+  img.onerror=()=>{
+    URL.revokeObjectURL(url);
+    downloadBlob(new Blob([source],{type:'image/svg+xml;charset=utf-8'}),`combat_plan_${safeStamp()}.svg`);
+    showToast('PNG не удалось собрать, сохранен SVG','error');
+  };
+  img.src=url;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+['colorFriendly','colorEnemy'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{
+    setForceSide(activeForce);
+    if(currentTool==='symbol'&&currentSymbol){ createSymPreview(); refreshSymPreviewPos(); }
+  });
+});
+document.getElementById('exportScale').addEventListener('change',()=>{
+  showToast(`Качество PNG: ${document.getElementById('exportScale').value}x`,'success');
+});
+setForceSide('friendly');
+setTool('select');
+updateTransform();
+</script>
+</body>
+</html>
