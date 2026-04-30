@@ -112,6 +112,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="divider"></div>
     <button class="act-btn" onclick="saveProject()"><span class="icon">💾</span> Сохранить проект</button>
     <button class="act-btn" onclick="document.getElementById('projectInput').click()"><span class="icon">📂</span> Загрузить проект</button>
+    <button class="act-btn" onclick="document.getElementById('symbolsInput').click()"><span class="icon">🏷️</span> Импорт меток</button>
+    <input type="file" id="projectInput" accept=".json,.txt" style="display:none" onchange="loadProject(this)">
+    <input type="file" id="symbolsInput" accept=".json" style="display:none" onchange="importCustomSymbols(this)">
 
     <div class="sec-title">Инструменты</div>
     <button class="act-btn tool-btn" data-tool="marker"          onclick="setTool('marker')"><span class="icon">🖍</span> Маркер</button>
@@ -1103,6 +1106,47 @@ function loadProject(file){
 document.getElementById('projectInput').addEventListener('change', function(e){
   if(e.target.files && e.target.files[0]){
     loadProject(e.target.files[0]);
+    this.value = '';
+  }
+});
+
+// ─── IMPORT CUSTOM SYMBOLS ───────────────────────────────────────────────
+function importCustomSymbols(file){
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const customSymbols=JSON.parse(e.target.result);
+      if(!Array.isArray(customSymbols)){
+        throw new Error('Файл должен содержать массив меток');
+      }
+      
+      // Validate and merge symbols
+      let addedCount=0;
+      customSymbols.forEach(sym=>{
+        if(sym.id && sym.path && sym.category){
+          // Check if symbol already exists
+          const existingIndex=symbols.findIndex(s=>s.id===sym.id);
+          if(existingIndex>=0){
+            symbols[existingIndex]=sym; // Update existing
+          }else{
+            symbols.push(sym); // Add new
+          }
+          addedCount++;
+        }
+      });
+      
+      renderSymbolPalette();
+      showToast(`Импортировано ${addedCount} меток`, 'success');
+    }catch(err){
+      showToast('Ошибка импорта меток: '+err.message,'error');
+    }
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+document.getElementById('symbolsInput').addEventListener('change', function(e){
+  if(e.target.files && e.target.files[0]){
+    importCustomSymbols(e.target.files[0]);
     this.value = '';
   }
 });
